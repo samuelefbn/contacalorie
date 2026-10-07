@@ -23,15 +23,6 @@ interface Props {
   onOpenProfile: () => void
 }
 
-/** Ora del giorno → pasto proposto di default quando si aggiunge dal pulsante principale. */
-function mealForNow(): MealType {
-  const h = new Date().getHours()
-  if (h < 11) return 'breakfast'
-  if (h < 15) return 'lunch'
-  if (h >= 18 && h < 23) return 'dinner'
-  return 'snack'
-}
-
 export function DiaryPage({ date, onDateChange, profile, onOpenProfile }: Props) {
   const uid = useUid()
   const { data: entries, loading, error } = useDayEntries(uid, date)
@@ -83,15 +74,6 @@ export function DiaryPage({ date, onDateChange, profile, onOpenProfile }: Props)
           ))}
         </>
       )}
-
-      <button
-        type="button"
-        onClick={() => setAdding(mealForNow())}
-        aria-label="Aggiungi alimento"
-        className="fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-3xl text-white shadow-lg hover:bg-emerald-700 sm:right-[calc(50%-20rem)]"
-      >
-        +
-      </button>
 
       {adding && <AddFoodSheet date={date} initialMeal={adding} onClose={() => setAdding(null)} />}
       {editing && <EntryEditor entry={editing} onClose={() => setEditing(null)} />}

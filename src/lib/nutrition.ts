@@ -93,7 +93,8 @@ export function per100FromTotals(totals: Nutrients, grams: number): Nutrients {
   if (grams <= 0) return { ...ZERO }
   const f = 100 / grams
   return {
-    kcal: round(totals.kcal * f),
+    // Un decimale anche sulle kcal: riapplicando i valori alla porzione il totale torna coerente.
+    kcal: round(totals.kcal * f, 1),
     protein: round(totals.protein * f, 1),
     carbs: round(totals.carbs * f, 1),
     fat: round(totals.fat * f, 1),

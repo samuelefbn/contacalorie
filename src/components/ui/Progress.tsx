@@ -20,16 +20,18 @@ export function ProgressRing({ value, target, size = 168, stroke = 14, children 
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-slate-200 dark:stroke-slate-800" />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={`${dash} ${c}`}
-          className={`transition-[stroke-dasharray] duration-500 ${over ? 'stroke-amber-500' : 'stroke-emerald-500'}`}
-        />
+        {dash > 0 && (
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={`${dash} ${c}`}
+            className={`transition-[stroke-dasharray] duration-500 ${over ? 'stroke-amber-500' : 'stroke-emerald-500'}`}
+          />
+        )}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">{children}</div>
     </div>

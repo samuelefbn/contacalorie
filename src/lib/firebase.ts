@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
-import { GoogleAuthProvider, getAuth, type Auth } from 'firebase/auth'
+import { GoogleAuthProvider, connectAuthEmulator, getAuth, type Auth } from 'firebase/auth'
 import {
+  connectFirestoreEmulator,
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
@@ -39,7 +40,13 @@ function init() {
   const db = initializeFirestore(app, {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
   })
-  return { auth: getAuth(app), db }
+  const auth = getAuth(app)
+  // Solo in sviluppo: `VITE_USE_EMULATORS=true npm run dev` usa gli emulatori locali di Firebase.
+  if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true') {
+    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
+    connectFirestoreEmulator(db, '127.0.0.1', 8080)
+  }
+  return { auth, db }
 }
 
 const services = isFirebaseConfigured ? init() : null
