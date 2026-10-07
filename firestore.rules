@@ -1,0 +1,140 @@
+rules_version = '2';
+
+// Regole di sicurezza di ContaCalorie.
+// Ogni utente può leggere e scrivere SOLO i documenti sotto users/{uid}
+// dove {uid} è il proprio uid autenticato. Tutto il resto è negato.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helper generici ----------
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function isNumIn(v, min, max) {
+      return v is number && v >= min && v <= max;
+    }
+
+    function isStrLen(v, min, max) {
+      return v is string && v.size() >= min && v.size() <= max;
+    }
+
+    function isOptStr(v, max) {
+      return v == null || (v is string && v.size() <= max);
+    }
+
+    function isDateStr(v) {
+      return v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    // Valori nutrizionali per 100 g (o per voce): non negativi e con limiti ragionevoli.
+    function isNutrients(n) {
+      return n is map
+        && n.keys().hasAll(['kcal', 'protein', 'carbs', 'fat'])
+        && n.keys().hasOnly(['kcal', 'protein', 'carbs', 'fat'])
+        && isNumIn(n.kcal, 0, 100000)
+        && isNumIn(n.protein, 0, 10000)
+        && isNumIn(n.carbs, 0, 10000)
+        && isNumIn(n.fat, 0, 10000);
+    }
+
+    // createdAt deve essere l'orario del server alla creazione e non cambiare più.
+    function createdAtOk() {
+      return request.resource.data.createdAt == (resource == null ? request.time : resource.data.createdAt);
+    }
+
+    // ---------- Profilo: users/{uid} ----------
+    function isValidProfile(d) {
+      return d.keys().hasOnly([
+          'displayName', 'sex', 'age', 'heightCm', 'weightKg', 'activityLevel', 'goal',
+          'kcalTarget', 'kcalManual', 'proteinTarget', 'carbsTarget', 'fatTarget',
+          'createdAt', 'updatedAt'
+        ])
+        && isOptStr(d.get('displayName', null), 100)
+        && d.get('sex', 'male') in ['male', 'female']
+        && isNumIn(d.get('age', 30), 10, 120)
+        && isNumIn(d.get('heightCm', 170), 50, 260)
+        && isNumIn(d.get('weightKg', 70), 20, 400)
+        && d.get('activityLevel', 'moderate') in ['sedentary', 'light', 'moderate', 'active', 'very_active']
+        && d.get('goal', 'maintain') in ['lose', 'maintain', 'gain']
+        && isNumIn(d.get('kcalTarget', 2000), 500, 10000)
+        && d.get('kcalManual', false) is bool
+        && isNumIn(d.get('proteinTarget', 0), 0, 1000)
+        && isNumIn(d.get('carbsTarget', 0), 0, 2000)
+        && isNumIn(d.get('fatTarget', 0), 0, 1000)
+        && d.get('createdAt', request.time) is timestamp
+        && d.get('updatedAt', request.time) == request.time;
+    }
+
+    // ---------- Voce di diario: users/{uid}/entries/{entryId} ----------
+    function isValidEntry(d) {
+      return d.keys().hasAll(['date', 'mealType', 'name', 'grams', 'kcal', 'protein', 'carbs', 'fat', 'per100', 'source', 'createdAt'])
+        && d.keys().hasOnly(['date', 'mealType', 'name', 'brand', 'grams', 'kcal', 'protein', 'carbs', 'fat', 'per100', 'source', 'foodId', 'barcode', 'createdAt', 'updatedAt'])
+        && isDateStr(d.date)
+        && d.mealType in ['breakfast', 'lunch', 'dinner', 'snack']
+        && isStrLen(d.name, 1, 200)
+        && isOptStr(d.get('brand', null), 200)
+        && isOptStr(d.get('foodId', null), 100)
+        && isOptStr(d.get('barcode', null), 50)
+        && isNumIn(d.grams, 0, 10000)
+        && isNumIn(d.kcal, 0, 100000)
+        && isNumIn(d.protein, 0, 10000)
+        && isNumIn(d.carbs, 0, 10000)
+        && isNumIn(d.fat, 0, 10000)
+        && isNutrients(d.per100)
+        && d.source in ['off', 'manual', 'custom', 'recipe']
+        && createdAtOk()
+        && d.get('updatedAt', request.time) == request.time;
+    }
+
+    // ---------- Alimento personale / ricetta: users/{uid}/foods/{foodId} ----------
+    function isValidFood(d) {
+      return d.keys().hasAll(['name', 'per100', 'defaultGrams', 'favorite', 'kind', 'createdAt'])
+        && d.keys().hasOnly(['name', 'brand', 'barcode', 'per100', 'defaultGrams', 'favorite', 'kind', 'ingredients', 'createdAt', 'updatedAt'])
+        && isStrLen(d.name, 1, 200)
+        && isOptStr(d.get('brand', null), 200)
+        && isOptStr(d.get('barcode', null), 50)
+        && isNutrients(d.per100)
+        && isNumIn(d.defaultGrams, 0, 10000)
+        && d.favorite is bool
+        && d.kind in ['food', 'recipe']
+        && (d.get('ingredients', []) is list && d.get('ingredients', []).size() <= 60)
+        && createdAtOk()
+        && d.get('updatedAt', request.time) == request.time;
+    }
+
+    // ---------- Peso: users/{uid}/weights/{date} (id del documento = data) ----------
+    function isValidWeight(d, date) {
+      return d.keys().hasOnly(['date', 'kg', 'updatedAt'])
+        && isDateStr(date)
+        && d.date == date
+        && isNumIn(d.kg, 20, 400)
+        && d.updatedAt == request.time;
+    }
+
+    match /users/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid) && isValidProfile(request.resource.data);
+
+      match /entries/{entryId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidEntry(request.resource.data);
+      }
+
+      match /foods/{foodId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidFood(request.resource.data);
+      }
+
+      match /weights/{date} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidWeight(request.resource.data, date);
+      }
+    }
+
+    // Qualsiasi altro percorso è vietato.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

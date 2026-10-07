@@ -1,0 +1,50 @@
+@import 'tailwindcss';
+
+/* Il tema scuro si attiva con la classe .dark su <html> (scelta manuale o di sistema). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-protein: #3b82f6;
+  --color-carbs: #f59e0b;
+  --color-fat: #ec4899;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* evita lo zoom automatico su iOS */
+  }
+}
+
+/* Colori dei grafici: definiti separatamente per tema chiaro e scuro. */
+:root {
+  --chart-bar: #10b981;
+  --chart-over: #f59e0b;
+  --chart-line: #059669;
+  --chart-grid: #e2e8f0;
+  --chart-axis: #64748b;
+  --chart-target: #475569;
+  --chart-surface: #ffffff;
+  --chart-text: #0f172a;
+}
+
+.dark {
+  --chart-bar: #34d399;
+  --chart-over: #fbbf24;
+  --chart-line: #34d399;
+  --chart-grid: #1e293b;
+  --chart-axis: #94a3b8;
+  --chart-target: #cbd5e1;
+  --chart-surface: #0f172a;
+  --chart-text: #f1f5f9;
+}

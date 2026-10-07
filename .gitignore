@@ -1,0 +1,27 @@
+# Dipendenze e build
+node_modules/
+dist/
+dev-dist/
+*.tsbuildinfo
+coverage/
+
+# Variabili d'ambiente: MAI committare le credenziali reali
+.env
+.env.*
+!.env.example
+
+# Firebase
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+*-service-account*.json
+serviceAccount*.json
+
+# Log ed editor
+npm-debug.log*
+*.log
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/

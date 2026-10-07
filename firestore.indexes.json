@@ -1,0 +1,20 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "entries",
+      "fieldPath": "per100",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "foods",
+      "fieldPath": "per100",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "foods",
+      "fieldPath": "ingredients",
+      "indexes": []
+    }
+  ]
+}
