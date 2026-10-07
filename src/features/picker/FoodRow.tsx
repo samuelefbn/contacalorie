@@ -25,14 +25,14 @@ export function FoodRow({ item, onSelect, actions }: Props) {
           <img src={item.imageUrl} alt="" loading="lazy" className="h-10 w-10 shrink-0 rounded-lg bg-white object-contain" />
         ) : null}
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">
-            {item.name}
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="truncate font-medium">{item.name}</p>
             {badge && (
-              <span className="ml-2 rounded bg-emerald-100 px-1.5 py-0.5 align-middle text-[10px] font-semibold text-emerald-800 uppercase dark:bg-emerald-900/50 dark:text-emerald-300">
+              <span className="shrink-0 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 uppercase dark:bg-emerald-900/50 dark:text-emerald-300">
                 {badge}
               </span>
             )}
-          </p>
+          </div>
           <p className="truncate text-xs text-slate-500 dark:text-slate-400">
             {item.brand ? `${item.brand} · ` : ''}
             {fmtInt(item.per100.kcal)} kcal/100 g · porzione {fmtInt(item.defaultGrams)} g

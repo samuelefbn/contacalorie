@@ -1,15 +1,26 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import type { Food, FoodItem } from '../../types'
 import { useUid } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
-import { getProductByBarcode, resultToItem, searchFoods } from '../../lib/foodSearch'
+import {
+  AllSourcesFailedError,
+  allSourcesFailed,
+  getProductByBarcode,
+  mergeGeneric,
+  OfflineError,
+  resultToItem,
+  searchGenericDataset,
+  searchOnline,
+  type FoodResult,
+  type OnlineOutcome,
+} from '../../lib/foodSearch'
 import { isAbortError } from '../../lib/foodSearch/http'
 import { matches, normalize } from '../../lib/text'
 import { foodToItem, itemToFoodInput, saveFood } from '../../services/foods'
 import { Button } from '../../components/ui/Button'
 import { EmptyState, ErrorNotice } from '../../components/ui/Feedback'
 import { BarcodeIcon, SearchIcon, StarIcon } from '../../components/ui/Icons'
-import { LoadingBlock } from '../../components/ui/Spinner'
+import { LoadingBlock, Spinner } from '../../components/ui/Spinner'
 import { BarcodeScanner } from './BarcodeScanner'
 import { FoodRow } from './FoodRow'
 
@@ -25,14 +36,18 @@ type Prefill = { barcode: string | null; name: string }
 
 type Remote =
   | { status: 'idle' }
-  | { status: 'loading'; label: string }
-  | { status: 'done'; query: string; items: FoodItem[] }
+  | { status: 'loading'; query: string }
+  | { status: 'done'; query: string; outcome: OnlineOutcome }
+  | { status: 'barcode'; label: string }
   | { status: 'error'; error: unknown; retry: () => void; prefill: Prefill }
 
 const MIN_CHARS = 2
 const DEBOUNCE_MS = 500
+/** Se il dataset incluso trova già almeno questi generici, USDA live non serve. */
+const DATASET_ENOUGH = 5
 
 const keyOf = (i: FoodItem) => normalize(`${i.name}|${i.brand ?? ''}`)
+const toItems = (results: FoodResult[]) => results.map(resultToItem)
 
 export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) {
   const uid = useUid()
@@ -51,16 +66,21 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
     [],
   )
 
+  const query = q.trim()
+  const active = query.length >= MIN_CHARS
   const savedKeys = new Set(myFoods.map((f) => keyOf(foodToItem(f))))
 
-  // Prima i tuoi alimenti e quelli già usati: immediati e disponibili anche offline.
-  const local =
-    q.trim().length >= MIN_CHARS
-      ? Array.from(
-          new Map(localItems.filter((i) => matches(`${i.name} ${i.brand ?? ''}`, q)).map((i) => [keyOf(i), i])).values(),
-        ).slice(0, 8)
-      : []
-  const localKeys = new Set(local.map(keyOf))
+  // (a) I tuoi alimenti e i recenti: i prodotti di Open Food Facts vanno tra i confezionati.
+  const local = active
+    ? Array.from(
+        new Map(localItems.filter((i) => matches(`${i.name} ${i.brand ?? ''}`, query)).map((i) => [keyOf(i), i])).values(),
+      ).slice(0, 8)
+    : []
+  const localGeneric = local.filter((i) => i.source !== 'off')
+  const localPackaged = local.filter((i) => i.source === 'off')
+
+  // (b) Dataset generico incluso nell'app: istantaneo, anche offline e con le API giù.
+  const dataset = active ? searchGenericDataset(query) : []
 
   const cancelPending = () => {
     clearTimeout(debounceRef.current)
@@ -68,30 +88,27 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
     abortRef.current = null
   }
 
-  const run = async (label: string, task: (signal: AbortSignal) => Promise<void>, onError: (error: unknown) => Remote) => {
+  const startController = () => {
     cancelPending()
     const ctrl = new AbortController()
     abortRef.current = ctrl
-    setRemote({ status: 'loading', label })
-    try {
-      await task(ctrl.signal)
-    } catch (error) {
-      if (!isAbortError(error)) setRemote(onError(error))
-    }
+    return ctrl
   }
 
+  // (c) Fonti online in parallelo: USDA live (se il dataset non basta) e Open Food Facts.
   const runSearch = (raw: string) => {
-    const query = raw.trim()
-    if (query.length < MIN_CHARS) return
-    void run(
-      'Cerco negli archivi nutrizionali…',
-      async (signal) => {
-        const outcome = await searchFoods(query, { signal })
-        setRemote({ status: 'done', query, items: outcome.results.map(resultToItem) })
-      },
-      // Compare solo se TUTTE le fonti hanno fallito (o se sei offline).
-      (error) => ({ status: 'error', error, retry: () => runSearch(query), prefill: { barcode: null, name: query } }),
-    )
+    const text = raw.trim()
+    if (text.length < MIN_CHARS) return
+    const ctrl = startController()
+    setRemote({ status: 'loading', query: text })
+    const includeUsda = searchGenericDataset(text).length < DATASET_ENOUGH
+    searchOnline(text, { signal: ctrl.signal, includeUsda })
+      .then((outcome) => setRemote({ status: 'done', query: text, outcome }))
+      .catch((error: unknown) => {
+        if (!isAbortError(error)) {
+          setRemote({ status: 'error', error, retry: () => runSearch(text), prefill: { barcode: null, name: text } })
+        }
+      })
   }
 
   const onQueryChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -114,28 +131,30 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
     setScanning(false)
     const mine = myFoods.find((f) => f.barcode === code)
     if (mine) return onSelect(foodToItem(mine))
-    void run(
-      `Cerco il codice ${code}…`,
-      async (signal) => {
-        const result = await getProductByBarcode(code, signal)
+    const ctrl = startController()
+    setRemote({ status: 'barcode', label: `Cerco il codice ${code}…` })
+    getProductByBarcode(code, ctrl.signal)
+      .then((result) => {
         setRemote({ status: 'idle' })
         if (result) onSelect(resultToItem(result))
         else {
           notify('Prodotto non trovato su Open Food Facts (o senza valori nutrizionali completi): inseriscilo a mano.')
           onNotFound({ barcode: code, name: '' })
         }
-      },
-      (error) => ({
-        status: 'error',
-        error: new Error(
-          'Open Food Facts non risponde in questo momento, quindi non posso leggere il codice a barre. ' +
-            'Riprova tra poco oppure inserisci l’alimento a mano.',
-          { cause: error },
-        ),
-        retry: () => lookupBarcode(code),
-        prefill: { barcode: code, name: '' },
-      }),
-    )
+      })
+      .catch((error: unknown) => {
+        if (isAbortError(error)) return
+        setRemote({
+          status: 'error',
+          error: new Error(
+            'Open Food Facts non risponde in questo momento, quindi non posso leggere il codice a barre. ' +
+              'Riprova tra poco oppure inserisci l’alimento a mano.',
+            { cause: error },
+          ),
+          retry: () => lookupBarcode(code),
+          prefill: { barcode: code, name: '' },
+        })
+      })
   }
 
   const saveToMine = (item: FoodItem) => {
@@ -143,7 +162,40 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
     notify(`${item.name} salvato tra i tuoi alimenti`)
   }
 
-  const onlineItems = remote.status === 'done' ? remote.items.filter((i) => !localKeys.has(keyOf(i))) : []
+  // I risultati online valgono solo per la query mostrata (mentre si scrive restano quelli locali).
+  const current = (remote.status === 'loading' || remote.status === 'done') && remote.query === query ? remote : null
+  const outcome = current?.status === 'done' ? current.outcome : null
+  const loading = active && (!current || current.status === 'loading') && remote.status !== 'error'
+
+  const localKeys = new Set(local.map(keyOf))
+  const notLocal = (items: FoodItem[]) => items.filter((i) => !localKeys.has(keyOf(i)))
+  const genericItems = [...localGeneric, ...notLocal(toItems(mergeGeneric(dataset, outcome?.usda ?? [])))]
+  const packagedItems = [...localPackaged, ...notLocal(toItems(outcome?.packaged ?? []))]
+
+  const everythingFailed = outcome != null && allSourcesFailed(local.length, dataset.length, outcome)
+  const offline = outcome != null && [outcome.usdaError, outcome.packagedError].some((e) => e instanceof OfflineError)
+
+  const star = (item: FoodItem) => {
+    if (item.foodId) return null
+    const saved = savedKeys.has(keyOf(item))
+    return (
+      <button
+        type="button"
+        disabled={saved}
+        aria-label={saved ? 'Già tra i tuoi alimenti' : 'Salva tra i tuoi alimenti'}
+        onClick={() => saveToMine(item)}
+        className="flex h-9 w-9 items-center justify-center text-amber-500 disabled:opacity-100"
+      >
+        <StarIcon filled={saved} className="h-5 w-5" />
+      </button>
+    )
+  }
+
+  const retryButton = (label = 'Riprova') => (
+    <button type="button" className="font-medium text-emerald-700 underline dark:text-emerald-400" onClick={() => runSearch(query)}>
+      {label}
+    </button>
+  )
 
   return (
     <div className="space-y-4">
@@ -160,7 +212,7 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
             className="h-11 w-full rounded-xl border border-slate-300 bg-white pr-3 pl-10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 focus:outline-none dark:border-slate-700 dark:bg-slate-950"
           />
         </div>
-        <Button type="submit" disabled={q.trim().length < MIN_CHARS}>
+        <Button type="submit" disabled={!active}>
           Cerca
         </Button>
         <Button variant="secondary" size="icon" onClick={() => setScanning(true)} aria-label="Scansiona codice a barre">
@@ -168,18 +220,8 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
         </Button>
       </form>
 
-      {local.length > 0 && (
-        <section>
-          <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Dai tuoi alimenti</h3>
-          <ul>
-            {local.map((item) => (
-              <FoodRow key={keyOf(item)} item={item} onSelect={() => onSelect(item)} />
-            ))}
-          </ul>
-        </section>
-      )}
+      {remote.status === 'barcode' && <LoadingBlock label={remote.label} />}
 
-      {remote.status === 'loading' && <LoadingBlock label={remote.label} />}
       {remote.status === 'error' && (
         <div className="space-y-2">
           <ErrorNotice error={remote.error} title="Ricerca non riuscita" />
@@ -193,57 +235,105 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
           </div>
         </div>
       )}
-      {remote.status === 'done' &&
-        (remote.items.length === 0 ? (
-          local.length === 0 && (
-            <EmptyState icon="🔍" title={`Nessun risultato per “${remote.query}”`}>
-              <button
-                type="button"
-                className="font-medium text-emerald-600"
-                onClick={() => onNotFound({ barcode: null, name: remote.query })}
-              >
+
+      {active && everythingFailed && (
+        <div className="space-y-2">
+          <ErrorNotice error={offline ? new OfflineError() : new AllSourcesFailedError()} title="Ricerca non riuscita" />
+          <div className="flex gap-2">
+            <Button size="sm" variant="secondary" onClick={() => runSearch(query)}>
+              Riprova
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => onNotFound({ barcode: null, name: query })}>
+              Inserisci a mano
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {active && !everythingFailed && remote.status !== 'error' && (
+        <>
+          <ResultSection
+            title="Alimenti generici"
+            items={genericItems}
+            onSelect={onSelect}
+            actions={star}
+            pending={loading && genericItems.length === 0 && dataset.length < DATASET_ENOUGH}
+            note={
+              outcome?.usdaError && genericItems.length > 0 ? (
+                <>USDA non risponde: mostro solo gli alimenti generici inclusi nell’app. {retryButton()}</>
+              ) : null
+            }
+            empty={outcome && !loading ? 'Nessun alimento generico trovato.' : null}
+          />
+          <ResultSection
+            title="Prodotti confezionati"
+            items={packagedItems}
+            onSelect={onSelect}
+            actions={star}
+            pending={loading}
+            note={
+              outcome?.packagedError ? (
+                <>
+                  {outcome.packagedError instanceof OfflineError
+                    ? 'Sei offline: prodotti confezionati non disponibili.'
+                    : 'Prodotti confezionati non disponibili al momento (Open Food Facts non risponde).'}{' '}
+                  {retryButton()}
+                </>
+              ) : null
+            }
+            empty={outcome && !loading && !outcome.packagedError ? 'Nessun prodotto confezionato trovato.' : null}
+          />
+          {outcome && genericItems.length === 0 && packagedItems.length === 0 && !outcome.packagedError && (
+            <EmptyState icon="🔍" title={`Nessun risultato per “${query}”`}>
+              <button type="button" className="font-medium text-emerald-600" onClick={() => onNotFound({ barcode: null, name: query })}>
                 Inseriscilo a mano
               </button>
             </EmptyState>
-          )
-        ) : (
-          onlineItems.length > 0 && (
-            <section>
-              <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Risultati online</h3>
-              <ul>
-                {onlineItems.map((item, i) => {
-                  const saved = savedKeys.has(keyOf(item))
-                  return (
-                    <FoodRow
-                      key={`${item.source}-${item.barcode ?? ''}-${i}`}
-                      item={item}
-                      onSelect={() => onSelect(item)}
-                      actions={
-                        <button
-                          type="button"
-                          disabled={saved}
-                          aria-label={saved ? 'Già tra i tuoi alimenti' : 'Salva tra i tuoi alimenti'}
-                          onClick={() => saveToMine(item)}
-                          className="flex h-9 w-9 items-center justify-center text-amber-500 disabled:opacity-100"
-                        >
-                          <StarIcon filled={saved} className="h-5 w-5" />
-                        </button>
-                      }
-                    />
-                  )
-                })}
-              </ul>
-            </section>
-          )
-        ))}
+          )}
+        </>
+      )}
 
-      {remote.status === 'idle' && local.length === 0 && (
+      {!active && remote.status === 'idle' && (
         <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-          Scrivi almeno 2 lettere: cerco tra i tuoi alimenti, su Open Food Facts e su USDA. Oppure scansiona il codice a barre.
+          Scrivi almeno 2 lettere: cerco tra i tuoi alimenti, negli alimenti generici (frutta, verdura, carne, pesce…) e
+          nei prodotti confezionati. Oppure scansiona il codice a barre.
         </p>
       )}
 
       {scanning && <BarcodeScanner onDetected={lookupBarcode} onClose={() => setScanning(false)} />}
     </div>
+  )
+}
+
+interface SectionProps {
+  title: string
+  items: FoodItem[]
+  onSelect: (item: FoodItem) => void
+  actions: (item: FoodItem) => ReactNode
+  pending: boolean
+  note: ReactNode
+  empty: string | null
+}
+
+function ResultSection({ title, items, onSelect, actions, pending, note, empty }: SectionProps) {
+  if (items.length === 0 && !pending && !note && !empty) return null
+  return (
+    <section aria-label={title}>
+      <h3 className="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+        {title}
+        {pending && <Spinner className="h-3.5 w-3.5" />}
+      </h3>
+      {items.length > 0 && (
+        <ul>
+          {items.map((item, i) => (
+            <FoodRow key={`${keyOf(item)}-${i}`} item={item} onSelect={() => onSelect(item)} actions={actions(item)} />
+          ))}
+        </ul>
+      )}
+      {note && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{note}</p>}
+      {items.length === 0 && !pending && !note && empty && (
+        <p className="py-2 text-sm text-slate-500 dark:text-slate-400">{empty}</p>
+      )}
+    </section>
   )
 }
