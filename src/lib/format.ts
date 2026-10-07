@@ -24,3 +24,18 @@ export function errorMessage(err: unknown): string {
   }
   return err instanceof Error ? err.message : 'Si è verificato un errore imprevisto.'
 }
+
+/** Converte l'input testuale in numero accettando la virgola decimale; NaN se non valido. */
+export function parseNum(s: string): number {
+  const t = s.trim().replace(',', '.')
+  return t === '' ? NaN : Number(t)
+}
+
+/** Numero → stringa per i campi di input, con virgola decimale. */
+export const numToInput = (n: number | null | undefined) => (n == null || Number.isNaN(n) ? '' : String(n).replace('.', ','))
+
+/** Valida i grammi inseriti: numero > 0 e ≤ 10 kg. */
+export function validGrams(s: string): number | null {
+  const g = parseNum(s)
+  return Number.isFinite(g) && g > 0 && g <= 10000 ? g : null
+}

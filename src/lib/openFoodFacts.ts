@@ -56,7 +56,10 @@ async function getJson(url: string, signal?: AbortSignal): Promise<{ status: num
     res = await fetch(url, { signal, headers: { Accept: 'application/json' } })
   } catch (err) {
     if ((err as Error).name === 'AbortError') throw err
-    throw new Error(navigator.onLine ? 'Open Food Facts non è raggiungibile. Riprova tra poco.' : 'Sei offline: la ricerca online non è disponibile.')
+    const message = navigator.onLine
+      ? 'Open Food Facts non è raggiungibile. Riprova tra poco.'
+      : 'Sei offline: la ricerca online non è disponibile.'
+    throw new Error(message, { cause: err })
   }
   if (res.status === 404) return { status: 404, body: null }
   if (res.status === 429) throw new Error('Troppe ricerche ravvicinate su Open Food Facts. Attendi un minuto.')

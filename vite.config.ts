@@ -7,6 +7,20 @@ import { VitePWA } from 'vite-plugin-pwa'
 // Per Firebase Hosting usa `npm run build:firebase`, che sovrascrive il base con "/".
 export default defineConfig({
   base: '/contacalorie/',
+  build: {
+    // Firebase e React in chunk separati: cambiano raramente e restano in cache tra un rilascio e l'altro.
+    chunkSizeWarningLimit: 700,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            { name: 'firebase', test: /node_modules[\\/](@firebase|firebase)[\\/]/ },
+            { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+          ],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),
