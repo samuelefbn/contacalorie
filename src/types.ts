@@ -7,8 +7,8 @@ export interface Nutrients {
   fat: number
 }
 
-/** Origine di un alimento o di una voce: Open Food Facts, inserimento manuale, alimento personale o ricetta. */
-export type FoodSource = 'off' | 'manual' | 'custom' | 'recipe'
+/** Origine di un alimento o di una voce: Open Food Facts, USDA, inserimento manuale, alimento personale o ricetta. */
+export type FoodSource = 'off' | 'usda' | 'manual' | 'custom' | 'recipe'
 
 export type Sex = 'male' | 'female'
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'

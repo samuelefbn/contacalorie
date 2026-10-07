@@ -63,7 +63,7 @@ export function FoodPicker({ onSelect, onDirect, manualSubmitLabel }: FoodPicker
 
       {tab === 'cerca' && (
         <SearchTab
-          localItems={[...myItems, ...recents.data]}
+          localItems={[...myItems, ...recents.all]}
           myFoods={foods.data}
           onSelect={onSelect}
           onNotFound={goManual}

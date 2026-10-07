@@ -47,12 +47,16 @@ export function useFoods(uid: string) {
 }
 
 const RECENT_LIMIT = 20
+const SEARCHABLE_LIMIT = 100
 
-/** "Ultimi usati": alimenti distinti dalle voci di diario più recenti. */
+/**
+ * "Ultimi usati": alimenti distinti dalle voci di diario più recenti.
+ * `data` sono i primi 20 (scheda Recenti); `all` fino a 100, ricercabili anche offline.
+ */
 export function useRecentFoods(uid: string) {
-  const q = useMemo(() => query(entriesRef(uid), orderBy('createdAt', 'desc'), limit(150)), [uid])
+  const q = useMemo(() => query(entriesRef(uid), orderBy('createdAt', 'desc'), limit(400)), [uid])
   const res = useQueryData(q, toEntry)
-  const data = useMemo(() => {
+  const all = useMemo(() => {
     const seen = new Set<string>()
     const out: FoodItem[] = []
     for (const e of res.data) {
@@ -60,11 +64,12 @@ export function useRecentFoods(uid: string) {
       if (seen.has(key)) continue
       seen.add(key)
       out.push(entryToItem(e))
-      if (out.length >= RECENT_LIMIT) break
+      if (out.length >= SEARCHABLE_LIMIT) break
     }
     return out
   }, [res.data])
-  return { ...res, data }
+  const data = useMemo(() => all.slice(0, RECENT_LIMIT), [all])
+  return { ...res, data, all }
 }
 
 export function useWeights(uid: string) {

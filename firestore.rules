@@ -82,7 +82,7 @@ service cloud.firestore {
         && isNumIn(d.carbs, 0, 10000)
         && isNumIn(d.fat, 0, 10000)
         && isNutrients(d.per100)
-        && d.source in ['off', 'manual', 'custom', 'recipe']
+        && d.source in ['off', 'usda', 'manual', 'custom', 'recipe']
         && createdAtOk()
         && d.get('updatedAt', request.time) == request.time;
     }

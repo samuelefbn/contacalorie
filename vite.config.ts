@@ -47,11 +47,11 @@ export default defineConfig({
         navigateFallback: 'index.html',
         runtimeCaching: [
           {
-            // Risposte di Open Food Facts: utili offline per alimenti già cercati.
-            urlPattern: ({ url }) => url.hostname.endsWith('openfoodfacts.org'),
+            // Risposte di Open Food Facts e USDA: utili offline per alimenti già cercati.
+            urlPattern: ({ url }) => url.hostname.endsWith('openfoodfacts.org') || url.hostname === 'api.nal.usda.gov',
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'open-food-facts',
+              cacheName: 'food-data',
               networkTimeoutSeconds: 8,
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] },

@@ -10,7 +10,7 @@ import { Card, SectionTitle } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/ui/Fields'
 
-const SOURCE_LABEL = { off: 'Open Food Facts', manual: 'Manuale', custom: 'Alimento personale', recipe: 'Ricetta' } as const
+const SOURCE_LABEL = { off: 'Open Food Facts', usda: 'USDA', manual: 'Manuale', custom: 'Alimento personale', recipe: 'Ricetta' } as const
 
 /** Esportazione in CSV di diario e peso (separatore ";" e virgola decimale, per Excel in italiano). */
 export function ExportSection() {
