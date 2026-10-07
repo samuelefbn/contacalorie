@@ -1,23 +1,16 @@
 {
-  "indexes": [
+  "indexes": [],
+  "fieldOverrides": [
     {
       "collectionGroup": "entries",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "date", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "ASCENDING" }
-      ]
+      "fieldPath": "per100",
+      "indexes": []
     },
     {
       "collectionGroup": "foods",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "favorite", "order": "DESCENDING" },
-        { "fieldPath": "name", "order": "ASCENDING" }
-      ]
-    }
-  ],
-  "fieldOverrides": [
+      "fieldPath": "per100",
+      "indexes": []
+    },
     {
       "collectionGroup": "foods",
       "fieldPath": "ingredients",
