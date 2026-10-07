@@ -1,0 +1,60 @@
+# Genera il dataset degli alimenti generici interrogando USDA FoodData Central (servono
+# rete e chiave, che i server di GitHub hanno), lo committa su main e ripubblica il sito.
+# Avvio manuale: Actions → "Genera alimenti generici (USDA)" → Run workflow.
+name: Genera alimenti generici (USDA)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: generic-foods
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Genera il dataset da USDA FoodData Central
+        run: npm run build:foods
+        env:
+          VITE_USDA_API_KEY: ${{ secrets.VITE_USDA_API_KEY }}
+
+      - name: Verifica il dataset (test)
+        run: npm test
+
+      - name: Committa il dataset su main
+        id: commit
+        run: |
+          if git diff --quiet -- src/data/genericFoods.it.json; then
+            echo "Nessuna modifica al dataset."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/genericFoods.it.json
+          git commit -m "Aggiorna il dataset degli alimenti generici da USDA FoodData Central"
+          git push origin HEAD:main
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # I push fatti con GITHUB_TOKEN non avviano altri workflow: il deploy va lanciato esplicitamente.
+      - name: Ripubblica il sito
+        if: steps.commit.outputs.changed == 'true'
+        run: gh workflow run deploy.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}
