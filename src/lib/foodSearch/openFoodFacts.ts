@@ -62,6 +62,7 @@ export function offProductToResult(p: OffProduct): FoodResult | null {
     name: pickName(p).slice(0, 200),
     brand: pickBrand(p.brands),
     source: 'off',
+    kind: 'packaged',
     kcal100: kcal,
     protein100: protein,
     carbs100: carbs,

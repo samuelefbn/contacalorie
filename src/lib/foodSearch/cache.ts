@@ -19,7 +19,7 @@ export interface SearchCacheOptions {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
-const PREFIX = 'contacalorie:food-search:v1:'
+const PREFIX = 'contacalorie:food-search:v2:'
 
 function defaultStorage(): KeyValueStorage | null {
   try {

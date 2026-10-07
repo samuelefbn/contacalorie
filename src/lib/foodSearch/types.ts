@@ -1,21 +1,33 @@
+import type { Portion } from '../../types'
+
 /** Fonti esterne di dati nutrizionali. */
 export type ExternalSource = 'off' | 'usda'
 
+/** Alimento generico (sfuso: frutta, carne, cereali…) o prodotto confezionato con marca. */
+export type FoodKind = 'generic' | 'packaged'
+
+export type { Portion }
+
 /** Risultato normalizzato di una ricerca, qualunque sia la fonte. Valori per 100 g. */
 export interface FoodResult {
-  /** Identificativo stabile, prefissato dalla fonte (es. "off:8076800195057", "usda:171688"). */
+  /** Identificativo stabile, prefissato dalla fonte (es. "off:8076800195057", "usda:171688", "gen:mela-con-buccia"). */
   id: string
   name: string
   brand: string | null
   source: ExternalSource
+  kind: FoodKind
   kcal100: number
   protein100: number
   carbs100: number
   fat100: number
   /** Porzione indicata dal produttore, se disponibile. */
   servingGrams: number | null
+  /** Porzioni rapide indicative (alimenti generici). */
+  portions?: Portion[]
   barcode: string | null
   imageUrl: string | null
+  /** Id FoodData Central, per evitare doppioni tra dataset e USDA live. */
+  fdcId?: number
 }
 
 export const SOURCE_LABEL: Record<ExternalSource, string> = {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { offProductToResult } from './openFoodFacts'
-import { usdaFoodToResult } from './usda'
+import { usdaFoodToResult } from './usdaMap'
 import { isPlausible, servingGrams } from './validate'
 
 const base = { name: 'x', kcal100: 100, protein100: 5, carbs100: 10, fat100: 3 }
@@ -51,6 +51,7 @@ describe('Open Food Facts → FoodResult', () => {
       name: 'Spaghetti n.5',
       brand: 'Barilla',
       source: 'off',
+      kind: 'packaged',
       kcal100: 359,
       protein100: 13,
       carbs100: 70.2,
@@ -108,6 +109,7 @@ describe('USDA → FoodResult', () => {
       name: 'Apples, raw, with skin',
       brand: null,
       source: 'usda',
+      kind: 'generic',
       kcal100: 52,
       protein100: 0.3,
       carbs100: 13.8,
@@ -115,6 +117,7 @@ describe('USDA → FoodResult', () => {
       servingGrams: null,
       barcode: null,
       imageUrl: null,
+      fdcId: 171688,
     })
   })
 

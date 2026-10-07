@@ -8,6 +8,7 @@ const results: FoodResult[] = [
     name: 'Latte',
     brand: null,
     source: 'off',
+    kind: 'packaged',
     kcal100: 64,
     protein100: 3.3,
     carbs100: 4.8,
@@ -49,7 +50,7 @@ describe('cache delle ricerche', () => {
 
   it('ignora dati corrotti o archiviazione non disponibile', () => {
     const storage = fakeStorage()
-    storage.map.set('contacalorie:food-search:v1:latte', '{non json')
+    storage.map.set('contacalorie:food-search:v2:latte', '{non json')
     expect(createSearchCache({ storage }).get('latte')).toBeNull()
 
     const broken = {
