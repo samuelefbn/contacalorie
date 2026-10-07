@@ -15,7 +15,7 @@ Il codice è pronto, ma alcune impostazioni si fanno solo dalle console di GitHu
 Su GitHub apri la Pull Request del branch `claude/serene-carson-gwg6c3` e premi **Merge pull request**.
 Il merge avvia il workflow di deploy. Se lo fai prima dei passi 2 e 3, la prima esecuzione fallirà: nessun problema, al termine del passo 3 rilanciala da **Actions → Deploy su GitHub Pages → Run workflow**.
 
-### 2. Aggiungi i 7 GitHub Secrets
+### 2. Aggiungi i GitHub Secrets (7 di Firebase + 1 per USDA)
 
 Nel repository vai su **Settings → Secrets and variables → Actions → New repository secret** e crea questi secret (nomi esatti):
 
@@ -28,8 +28,16 @@ Nel repository vai su **Settings → Secrets and variables → Actions → New r
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | `messagingSenderId` |
 | `VITE_FIREBASE_APP_ID` | `appId` |
 | `VITE_FIREBASE_MEASUREMENT_ID` | `measurementId` (Analytics non viene inizializzato, ma la variabile è prevista) |
+| `VITE_USDA_API_KEY` | chiave gratuita di USDA FoodData Central (vedi [Ricerca alimenti](#ricerca-alimenti-fonti-e-fallback)) |
 
-I valori sono in **Firebase Console → ⚙️ Impostazioni progetto → Generali → Le tue app → (app web) → Configurazione SDK → Config**. Se non hai ancora un'app web, creala con l'icona `</>`.
+I valori Firebase sono in **Firebase Console → ⚙️ Impostazioni progetto → Generali → Le tue app → (app web) → Configurazione SDK → Config**. Se non hai ancora un'app web, creala con l'icona `</>`.
+
+Per `VITE_USDA_API_KEY`:
+1. Registrati gratis su https://fdc.nal.usda.gov/api-key-signup (bastano nome ed email): la chiave arriva subito via email.
+2. Aggiungila come secret `VITE_USDA_API_KEY` (stessa schermata degli altri).
+3. Rilancia il deploy da **Actions → Deploy su GitHub Pages → Run workflow** (o fai un push su `main`).
+
+Senza questo secret l'app usa la chiave pubblica `DEMO_KEY`, che ha limiti molto bassi (circa 30 richieste l'ora e 50 al giorno per indirizzo IP): la ricerca USDA smetterebbe presto di rispondere. La chiave personale permette 1.000 richieste l'ora. Come la API key di Firebase, finisce nel JavaScript pubblicato: è normale per una chiave di sola lettura su dati pubblici.
 
 ### 3. Abilita GitHub Pages con sorgente "GitHub Actions"
 
@@ -50,6 +58,8 @@ samuelefbn.github.io
 1. Apri il file [`firestore.rules`](firestore.rules) di questo repository e copiane **tutto** il contenuto.
 2. **Firebase Console → Firestore Database → scheda Regole**.
 3. Sostituisci il testo esistente con quello copiato e premi **Pubblica**.
+
+**Ripeti questo passo ogni volta che `firestore.rules` cambia** (l'ultima modifica aggiunge la fonte `usda` alle voci di diario: senza ripubblicare, aggiungere al diario un alimento trovato su USDA dà "Permesso negato").
 
 Senza questo passo l'app riceverà errori "Permesso negato". Le regole permettono a ciascun utente di leggere e scrivere **solo** i documenti sotto `users/{il-suo-uid}` e verificano tipi e limiti dei campi (data, pasto, grammi, calorie non negative…). Tutto il resto è negato.
 
@@ -79,7 +89,7 @@ Fatto: apri https://samuelefbn.github.io/contacalorie/, accedi con Google e comp
 - **Login con Google**: ogni utente vede solo i propri dati (garantito dalle regole Firestore, non solo dall'interfaccia).
 - **Profilo e obiettivi**: sesso, età, altezza, peso, livello di attività e obiettivo (dimagrire / mantenere / aumentare). Il fabbisogno è calcolato con la formula di **Mifflin-St Jeor** × fattore di attività (−500 kcal per dimagrire, +300 per aumentare, con una soglia minima di sicurezza) e si può sovrascrivere a mano. Target di proteine, carboidrati e grassi modificabili, con calcolo automatico.
 - **Diario giornaliero** diviso in colazione, pranzo, cena e spuntini: nome, grammi, kcal e macro per ogni voce. Tocca una voce per cambiare quantità, pasto o giorno, oppure eliminarla (con **Annulla**).
-- **Ricerca alimenti** su [Open Food Facts](https://world.openfoodfacts.org) per nome o **codice a barre** (scanner con la fotocamera, o inserimento del codice a mano), più **inserimento manuale** con valori per 100 g o per la quantità consumata. Nota: il servizio di ricerca di Open Food Facts è spesso sovraccarico; l'app ritenta in automatico fino a 3 volte, ma se fallisce ancora basta premere **Riprova** dopo qualche secondo (la ricerca per codice a barre è in genere più affidabile).
+- **Ricerca alimenti** mentre scrivi, tra i tuoi alimenti e su più fonti con valori reali ([Open Food Facts](https://world.openfoodfacts.org) e [USDA FoodData Central](https://fdc.nal.usda.gov), vedi sotto), per nome o **codice a barre** (scanner con la fotocamera, o inserimento del codice a mano), più **inserimento manuale** con valori per 100 g o per la quantità consumata. Ogni risultato mostra la fonte.
 - **Alimenti personali, preferiti e ricette**: salva con la ⭐ gli alimenti ricorrenti, crea ricette da ingredienti (con peso finale da cotto e numero di porzioni) o salva un intero pasto come ricetta. Gli **ultimi usati** si riaggiungono con un tap (pulsante **+**).
 - **Dashboard**: anello con calorie consumate vs obiettivo, calorie rimanenti (o in eccesso) e barre dei macro.
 - **Storico**: grafico delle calorie degli ultimi 7/30 giorni con linea dell'obiettivo, media giornaliera, **media settimanale**, giorni entro l'obiettivo; **registrazione e grafico del peso**.
@@ -87,13 +97,30 @@ Fatto: apri https://samuelefbn.github.io/contacalorie/, accedi con Google e comp
 - **Esportazione CSV** di diario e peso (separatore `;` e virgola decimale, si apre direttamente in Excel in italiano).
 - **PWA**: installabile, tema chiaro/scuro (o di sistema), funziona **offline** grazie alla cache persistente di Firestore; le modifiche fatte offline si sincronizzano al ritorno della rete.
 
+## Ricerca alimenti: fonti e fallback
+
+La ricerca per nome prova le fonti **in ordine** e passa alla successiva se una risponde con errore 5xx o 429, va in timeout, è bloccata dalla rete o non trova risultati:
+
+1. **I tuoi alimenti e quelli già usati** (fino a 100 distinti dalle voci recenti): mostrati per primi, subito, anche offline.
+2. **Open Food Facts – Search-a-licious** (`search.openfoodfacts.org/search`, `langs=it,en`, 20 risultati): il nuovo motore di ricerca di OFF.
+3. **Open Food Facts – ricerca classica** (`it.openfoodfacts.org/cgi/search.pl`): spesso sovraccarica (risponde 503 senza intestazione CORS, che il browser vede come errore di rete, per questo qui si ritentano anche gli errori di rete).
+4. **USDA FoodData Central** (`api.nal.usda.gov/fdc/v1/foods/search`, solo dataset *Foundation* e *SR Legacy*): ottimo per alimenti generici (mela, riso, pollo…). USDA è in inglese: la query passa da un dizionario italiano → inglese di circa 200 alimenti comuni (quasi 300 voci contando plurali e modi di preparazione) (`mela` → `apple`, `petto di pollo` → `chicken breast`); i nomi dei risultati restano in inglese.
+
+Regole comuni:
+- **Timeout di 8 secondi** per richiesta e **fino a 2 retry** con attesa crescente (0,5 s, 1 s) su 5xx, 429 e timeout.
+- La ricerca parte **500 ms dopo che smetti di scrivere** (minimo 2 caratteri) e annulla quella precedente.
+- **Cache** dei risultati per query in memoria e in `sessionStorage` per **24 ore**: ricerche ripetute non chiamano le API (utile anche per i limiti di Open Food Facts).
+- **Solo valori reali**: si usano kcal, proteine, carboidrati e grassi per 100 g dichiarati dalla fonte. Un prodotto con uno di questi valori mancante viene scartato (non viene messo 0), così come valori incoerenti (kcal negative o oltre 950, un macro oltre 100 g per 100 g, somma dei macro oltre 100 g, kcal molto inferiori a quanto i macro impongono).
+- Il messaggio d'errore compare **solo se tutte le fonti falliscono**, con **Riprova** (rilancia l'intera catena) e **Inserisci a mano**.
+- Il **codice a barre** usa `world.openfoodfacts.org/api/v2/product/{codice}.json` con gli stessi timeout e retry; se OFF non risponde lo dice chiaramente e propone l'inserimento manuale.
+
 ## Sviluppo in locale
 
 Requisiti: Node.js 20.19+ (consigliato 22).
 
 ```bash
 npm install
-cp .env.example .env     # poi inserisci i valori reali (il file .env è nel .gitignore)
+cp .env.example .env     # poi inserisci i valori reali, compresa VITE_USDA_API_KEY (il file .env è nel .gitignore)
 npm run dev              # http://localhost:5173/contacalorie/
 ```
 
@@ -132,7 +159,9 @@ src/
   App.tsx            provider, autenticazione e navigazione a schede (#/diario, #/alimenti, …)
   types.ts           tipi del modello dati
   lib/               firebase.ts, nutrition.ts (Mifflin-St Jeor, macro), dates.ts,
-                     openFoodFacts.ts, csv.ts, format.ts, text.ts (+ test)
+                     csv.ts, format.ts, text.ts (+ test)
+  lib/foodSearch/    ricerca alimenti: catena di fonti (index.ts), Open Food Facts, USDA,
+                     dizionario IT→EN, HTTP con timeout/retry, cache, validazione (+ test)
   services/          scritture su Firestore e conversione dei documenti
   hooks/             listener in tempo reale (profilo, giorno, intervalli, alimenti, recenti, peso)
   contexts/          Auth, Tema, Notifiche
