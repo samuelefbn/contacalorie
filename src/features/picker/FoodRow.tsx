@@ -2,7 +2,12 @@ import type { ReactNode } from 'react'
 import type { FoodItem } from '../../types'
 import { fmtInt } from '../../lib/format'
 
-const SOURCE_BADGE: Partial<Record<FoodItem['source'], string>> = { recipe: 'Ricetta', custom: 'Mio' }
+const SOURCE_BADGE: Partial<Record<FoodItem['source'], string>> = {
+  recipe: 'Ricetta',
+  custom: 'Mio',
+  off: 'Open Food Facts',
+  usda: 'USDA',
+}
 
 interface Props {
   item: FoodItem
