@@ -50,21 +50,54 @@ export function mapProduct(p: OffProduct): FoodItem | null {
   }
 }
 
+/** Attese tra un tentativo e l'altro: 3 tentativi in totale. */
+export const RETRY_DELAYS_MS = [800, 2000]
+
+function wait(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(signal.reason)
+    const t = setTimeout(resolve, ms)
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(t)
+        reject(signal.reason)
+      },
+      { once: true },
+    )
+  })
+}
+
+/**
+ * Open Food Facts è spesso sovraccarico: i suoi errori 503 arrivano senza intestazione CORS,
+ * quindi il browser li vede come errori di rete. Per questo errori di rete e 5xx vengono ritentati.
+ */
 async function getJson(url: string, signal?: AbortSignal): Promise<{ status: number; body: unknown }> {
-  let res: Response
-  try {
-    res = await fetch(url, { signal, headers: { Accept: 'application/json' } })
-  } catch (err) {
-    if ((err as Error).name === 'AbortError') throw err
-    const message = navigator.onLine
-      ? 'Open Food Facts non è raggiungibile. Riprova tra poco.'
-      : 'Sei offline: la ricerca online non è disponibile.'
-    throw new Error(message, { cause: err })
+  let lastError: unknown = null
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    if (attempt > 0) await wait(RETRY_DELAYS_MS[attempt - 1], signal)
+    let res: Response
+    try {
+      res = await fetch(url, { signal, headers: { Accept: 'application/json' } })
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') throw err
+      if (!navigator.onLine) throw new Error('Sei offline: la ricerca online non è disponibile.', { cause: err })
+      lastError = err
+      continue
+    }
+    if (res.status === 404) return { status: 404, body: null }
+    if (res.status === 429) throw new Error('Troppe ricerche ravvicinate su Open Food Facts. Attendi un minuto.')
+    if (res.status >= 500) {
+      lastError = new Error(`HTTP ${res.status}`)
+      continue
+    }
+    if (!res.ok) throw new Error(`Open Food Facts ha risposto con un errore (${res.status}).`)
+    return { status: res.status, body: await res.json() }
   }
-  if (res.status === 404) return { status: 404, body: null }
-  if (res.status === 429) throw new Error('Troppe ricerche ravvicinate su Open Food Facts. Attendi un minuto.')
-  if (!res.ok) throw new Error(`Open Food Facts ha risposto con un errore (${res.status}).`)
-  return { status: res.status, body: await res.json() }
+  throw new Error(
+    'Open Food Facts è sovraccarico in questo momento. Riprova tra poco, oppure usa il codice a barre o l’inserimento manuale.',
+    { cause: lastError },
+  )
 }
 
 export async function searchProducts(query: string, signal?: AbortSignal): Promise<FoodItem[]> {

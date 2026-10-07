@@ -57,14 +57,18 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
   }
 
   // La ricerca online parte solo all'invio: l'API di Open Food Facts limita le ricerche al minuto.
-  const search = (e: FormEvent) => {
-    e.preventDefault()
+  const runSearch = () => {
     const query = q.trim()
     if (query.length < 2) return
     void run('Cerco su Open Food Facts…', async (signal) => {
       const items = await searchProducts(query, signal)
       setRemote({ status: 'done', query, items })
     })
+  }
+
+  const search = (e: FormEvent) => {
+    e.preventDefault()
+    runSearch()
   }
 
   const lookupBarcode = (code: string) => {
@@ -122,7 +126,19 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
       )}
 
       {remote.status === 'loading' && <LoadingBlock label={remote.label} />}
-      {remote.status === 'error' && <ErrorNotice error={remote.error} title="Ricerca non riuscita" />}
+      {remote.status === 'error' && (
+        <div className="space-y-2">
+          <ErrorNotice error={remote.error} title="Ricerca non riuscita" />
+          <div className="flex gap-2">
+            <Button size="sm" variant="secondary" onClick={runSearch} disabled={q.trim().length < 2}>
+              Riprova
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => onNotFound({ barcode: null, name: q.trim() })}>
+              Inserisci a mano
+            </Button>
+          </div>
+        </div>
+      )}
       {remote.status === 'done' &&
         (remote.items.length === 0 ? (
           <EmptyState icon="🔍" title={`Nessun risultato per “${remote.query}”`}>
