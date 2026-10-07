@@ -99,20 +99,41 @@ Fatto: apri https://samuelefbn.github.io/contacalorie/, accedi con Google e comp
 
 ## Ricerca alimenti: fonti e fallback
 
-La ricerca per nome prova le fonti **in ordine** e passa alla successiva se una risponde con errore 5xx o 429, va in timeout, è bloccata dalla rete o non trova risultati:
+Open Food Facts è un database di **prodotti confezionati**: non copre bene gli alimenti sfusi (frutta, verdura, carne fresca, pesce, uova, legumi, cereali). Per questo la ricerca ha due binari, interrogati **sempre in parallelo** (un errore di uno non blocca l'altro), e i risultati sono mostrati in due sezioni:
 
-1. **I tuoi alimenti e quelli già usati** (fino a 100 distinti dalle voci recenti): mostrati per primi, subito, anche offline.
-2. **Open Food Facts – Search-a-licious** (`search.openfoodfacts.org/search`, `langs=it,en`, 20 risultati): il nuovo motore di ricerca di OFF.
-3. **Open Food Facts – ricerca classica** (`it.openfoodfacts.org/cgi/search.pl`): spesso sovraccarica (risponde 503 senza intestazione CORS, che il browser vede come errore di rete, per questo qui si ritentano anche gli errori di rete).
-4. **USDA FoodData Central** (`api.nal.usda.gov/fdc/v1/foods/search`, solo dataset *Foundation* e *SR Legacy*): ottimo per alimenti generici (mela, riso, pollo…). USDA è in inglese: la query passa da un dizionario italiano → inglese di circa 200 alimenti comuni (quasi 300 voci contando plurali e modi di preparazione) (`mela` → `apple`, `petto di pollo` → `chicken breast`); i nomi dei risultati restano in inglese.
+**1. Alimenti generici** (in alto, fonte primaria)
+1. **I tuoi alimenti e quelli già usati** (fino a 100 distinti dalle voci recenti): istantanei, anche offline.
+2. **Dataset generico incluso nell'app** (`src/data/genericFoods.it.json`): circa 390 alimenti della cucina italiana con nomi e sinonimi in italiano, varianti crudo/cotto per carni e pesci, valori per 100 g presi da USDA FoodData Central. Funziona offline e con le API giù. Ricerca tollerante: senza accenti, singolare/plurale (*mele* → *mela*, *zucchine* → *zucchina*), senza preposizioni, con priorità *esatto > inizia con > contiene > approssimato* (errori di battitura, con Fuse.js).
+3. **USDA FoodData Central live** (`api.nal.usda.gov/fdc/v1/foods/search`, dataset *Foundation* e *SR Legacy*, 15 risultati) per ciò che il dataset non copre: la query viene tradotta con un dizionario italiano → inglese (*mela* → *apple*, *salsiccia* → *pork sausage*); i nomi di questi risultati restano in inglese.
+
+**2. Prodotti confezionati** (sotto): Open Food Facts, prima **Search-a-licious** (`search.openfoodfacts.org`) e, se fallisce o non trova nulla, la **ricerca classica** (`it.openfoodfacts.org/cgi/search.pl`, spesso sovraccarica: risponde 503 senza intestazione CORS, quindi qui si ritentano anche gli errori di rete).
+
+Ogni risultato ha un'etichetta con la fonte (*USDA*, *Open Food Facts*, *Mio*, *Ricetta*). Per gli alimenti generici ci sono **porzioni rapide indicative** (es. *1 mela media ≈ 180 g*, *1 uovo medio ≈ 50 g*), sempre modificabili in grammi.
 
 Regole comuni:
-- **Timeout di 8 secondi** per richiesta e **fino a 2 retry** con attesa crescente (0,5 s, 1 s) su 5xx, 429 e timeout.
-- La ricerca parte **500 ms dopo che smetti di scrivere** (minimo 2 caratteri) e annulla quella precedente.
-- **Cache** dei risultati per query in memoria e in `sessionStorage` per **24 ore**: ricerche ripetute non chiamano le API (utile anche per i limiti di Open Food Facts).
-- **Solo valori reali**: si usano kcal, proteine, carboidrati e grassi per 100 g dichiarati dalla fonte. Un prodotto con uno di questi valori mancante viene scartato (non viene messo 0), così come valori incoerenti (kcal negative o oltre 950, un macro oltre 100 g per 100 g, somma dei macro oltre 100 g, kcal molto inferiori a quanto i macro impongono).
-- Il messaggio d'errore compare **solo se tutte le fonti falliscono**, con **Riprova** (rilancia l'intera catena) e **Inserisci a mano**.
-- Il **codice a barre** usa `world.openfoodfacts.org/api/v2/product/{codice}.json` con gli stessi timeout e retry; se OFF non risponde lo dice chiaramente e propone l'inserimento manuale.
+- **Timeout di 8 secondi** per richiesta e **fino a 2 retry** con attesa crescente (0,5 s, 1 s) solo su 5xx, 429 e timeout.
+- La ricerca online parte **500 ms dopo che smetti di scrivere** (minimo 2 caratteri) e annulla quella precedente; i generici del dataset compaiono subito.
+- **Cache** dei risultati per query e per fonte, in memoria e in `sessionStorage`, per **24 ore**.
+- **Solo valori reali**: kcal, proteine, carboidrati e grassi per 100 g dichiarati dalla fonte. Un risultato con uno di questi valori mancante viene scartato (non si mette 0), così come valori incoerenti (kcal negative o oltre 950, un macro oltre 100 g per 100 g, somma dei macro oltre 100 g, kcal molto inferiori a quanto i macro impongono).
+- Il messaggio d'errore compare **solo se tutte le fonti falliscono**, con **Riprova** e **Inserisci a mano**. Se fallisce una sola fonte compare una nota discreta (es. *"Prodotti confezionati non disponibili al momento"*) e restano visibili gli altri risultati.
+- Il **codice a barre** usa `world.openfoodfacts.org/api/v2/product/{codice}.json` con gli stessi timeout e retry; se OFF non risponde lo dice e propone l'inserimento manuale.
+
+### Generare (o aggiornare) il dataset degli alimenti generici
+
+I valori del dataset arrivano **solo dall'API USDA**, tramite `scripts/build-generic-foods.ts`: l'elenco degli alimenti, con sinonimi, categoria, stato (crudo/cotto…) e porzioni indicative, è in `scripts/genericFoods.defs.ts` e non contiene valori nutrizionali. Per ogni alimento lo script cerca su USDA (Foundation e SR Legacy), sceglie la voce la cui descrizione corrisponde (es. *"Chicken, broilers or fryers, breast, meat only, raw"*) e ne copia i valori per 100 g, con data di generazione e `fdcId` originale. Se non trova una voce compatibile, l'alimento viene saltato e segnalato (mai inventato).
+
+**Modo semplice, da GitHub** (consigliato):
+1. Assicurati di avere il secret `VITE_USDA_API_KEY` (vedi passo 2 in alto).
+2. Vai su **Actions → "Genera alimenti generici (USDA)" → Run workflow → Run workflow**.
+3. In 1-2 minuti il workflow genera il dataset, esegue i test, lo committa su `main` e ripubblica il sito. Nella pagina dell'esecuzione trovi una tabella con, per ogni alimento, la voce USDA scelta e i valori, più l'elenco di quelli non trovati.
+
+**In locale**:
+```bash
+VITE_USDA_API_KEY=la-tua-chiave npm run build:foods   # oppure metti la chiave nel file .env
+git add src/data/genericFoods.it.json && git commit -m "Aggiorna dataset alimenti generici"
+```
+
+Finché il dataset è vuoto, gli alimenti generici arrivano solo da USDA live (nomi in inglese) e dai tuoi alimenti.
 
 ## Sviluppo in locale
 
@@ -131,7 +152,8 @@ Altri comandi:
 | `npm run build` | build di produzione per GitHub Pages (in `dist/`) |
 | `npm run preview` | serve la build in locale |
 | `npm run lint` | ESLint |
-| `npm test` | unit test (Vitest) di calcoli, date, CSV, mapping Open Food Facts e statistiche |
+| `npm test` | unit test (Vitest) di calcoli, date, CSV, ricerca alimenti e statistiche |
+| `npm run build:foods` | genera `src/data/genericFoods.it.json` da USDA (serve `VITE_USDA_API_KEY`) |
 | `npm run build:firebase` | build con `base` `/` per Firebase Hosting |
 
 **Emulatori Firebase (facoltativo)**: per provare tutto in locale senza toccare i dati veri, avvia `firebase emulators:start --only auth,firestore` e poi `VITE_USE_EMULATORS=true npm run dev`.
@@ -154,14 +176,17 @@ Serve un file `.env` locale con i valori reali. Ricordati di aggiungere `contaca
 
 ```
 .github/workflows/   ci.yml (lint/test/build sulle PR) · deploy.yml (GitHub Pages)
+                     generic-foods.yml (genera il dataset degli alimenti generici da USDA)
+scripts/             build-generic-foods.ts + genericFoods.defs.ts (elenco alimenti generici)
 public/              icone PWA e favicon
 src/
   App.tsx            provider, autenticazione e navigazione a schede (#/diario, #/alimenti, …)
   types.ts           tipi del modello dati
   lib/               firebase.ts, nutrition.ts (Mifflin-St Jeor, macro), dates.ts,
                      csv.ts, format.ts, text.ts (+ test)
-  lib/foodSearch/    ricerca alimenti: catena di fonti (index.ts), Open Food Facts, USDA,
-                     dizionario IT→EN, HTTP con timeout/retry, cache, validazione (+ test)
+  lib/foodSearch/    ricerca alimenti: generici (dataset + USDA) e confezionati (Open Food Facts)
+                     in parallelo, dizionario IT→EN, HTTP con timeout/retry, cache, validazione (+ test)
+  data/              genericFoods.it.json (dataset generato da USDA)
   services/          scritture su Firestore e conversione dei documenti
   hooks/             listener in tempo reale (profilo, giorno, intervalli, alimenti, recenti, peso)
   contexts/          Auth, Tema, Notifiche

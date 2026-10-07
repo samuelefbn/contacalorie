@@ -10,11 +10,13 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc -b",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:foods": "tsx scripts/build-generic-foods.ts"
   },
   "dependencies": {
     "@zxing/browser": "^0.2.1",
     "firebase": "^12.19.0",
+    "fuse.js": "^7.5.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "recharts": "^3.10.1"
@@ -31,6 +33,7 @@
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.13.0",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "~5.9",
     "typescript-eslint": "^8.71.1",
     "vite": "^8.3.3",

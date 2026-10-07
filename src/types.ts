@@ -73,6 +73,12 @@ export interface WeightEntry {
   kg: number
 }
 
+/** Porzione indicativa (es. "1 mela media" ≈ 180 g): l'utente può sempre modificare i grammi. */
+export interface Portion {
+  label: string
+  grams: number
+}
+
 /** Alimento "candidato" da aggiungere al diario, qualunque sia la sua origine. */
 export interface FoodItem {
   name: string
@@ -83,4 +89,6 @@ export interface FoodItem {
   source: FoodSource
   foodId: string | null
   imageUrl?: string | null
+  /** Porzioni rapide indicative (alimenti generici). */
+  portions?: Portion[]
 }
