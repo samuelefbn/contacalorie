@@ -12,7 +12,9 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "build:foods": "tsx scripts/build-generic-foods.ts",
-    "test:rules": "npx -y firebase-tools@15.33.0 emulators:exec --only firestore --project demo-contacalorie \"vitest run -c vitest.rules.config.ts\""
+    "test:rules": "npx -y firebase-tools@15.33.0 emulators:exec --only firestore --project demo-contacalorie \"vitest run -c vitest.rules.config.ts\"",
+    "docs:functions": "tsx scripts/docs/functions.ts",
+    "docs:check": "tsx scripts/docs/check.ts"
   },
   "dependencies": {
     "@zxing/browser": "^0.2.1",
