@@ -1,6 +1,7 @@
 import type { DocumentSnapshot, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore'
 import type { Entry, Food, FoodOrigin, FoodSource, FoodType, Nutrients, PendingScan, Profile, RecipeIngredient, WeightEntry } from '../types'
 import { ZERO } from '../lib/nutrition'
+import { parseTutorialState, type TutorialState } from '../lib/tutorial'
 
 type Data = Record<string, unknown>
 
@@ -121,4 +122,9 @@ export function toProfile(d: DocumentSnapshot): Profile | null {
     // I profili salvati prima dell'onboarding non hanno il campo: valgono come completati.
     onboarded: x.onboarded !== false,
   }
+}
+
+/** Campo tutorial di users/{uid}, letto a parte: non fa parte del Profile, così saveProfile non lo tocca. */
+export function toTutorialState(d: DocumentSnapshot): TutorialState | null {
+  return d.exists() ? parseTutorialState(read(d).tutorial) : null
 }

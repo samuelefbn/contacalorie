@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { limit, orderBy, query, where } from 'firebase/firestore'
 import type { FoodItem } from '../types'
 import { entriesRef, foodsRef, pendingScansRef, userRef, weightsRef } from '../services/refs'
-import { toEntry, toFood, toPendingScan, toProfile, toWeight } from '../services/mappers'
+import { toEntry, toFood, toPendingScan, toProfile, toTutorialState, toWeight } from '../services/mappers'
 import { entryToItem } from '../services/entries'
 import { useDocData, useQueryData } from './useFirestore'
 
@@ -81,4 +81,10 @@ export function useWeights(uid: string) {
 export function usePendingScans(uid: string) {
   const q = useMemo(() => query(pendingScansRef(uid)), [uid])
   return useQueryData(q, toPendingScan)
+}
+
+/** Stato del tutorial di benvenuto (stesso documento del profilo: Firestore condivide il listener). */
+export function useTutorialState(uid: string) {
+  const ref = useMemo(() => userRef(uid), [uid])
+  return useDocData(ref, toTutorialState)
 }
