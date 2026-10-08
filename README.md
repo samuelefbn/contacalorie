@@ -1,284 +1,121 @@
 # ContaCalorie
 
-App web personale per contare le calorie giornaliere: registri ciò che mangi e vedi subito se stai rispettando il tuo obiettivo calorico e di macronutrienti. È una PWA installabile sul telefono, funziona anche offline e usa Firebase (Authentication + Firestore) come database.
+App web personale per contare le calorie, in italiano. Registri ciò che mangi e vedi subito se rispetti il tuo obiettivo di calorie e macronutrienti. È una **PWA** installabile sul telefono, **funziona anche offline** (sincronizza da sola al ritorno della rete) e usa **Firebase** (Authentication + Firestore) per i dati privati di ogni utente.
 
-**Indirizzo dopo il deploy:** https://samuelefbn.github.io/contacalorie/
+**Indirizzo:** https://samuelefbn.github.io/contacalorie/
 
----
-
-## ✅ Cosa devi fare tu (passo per passo)
-
-Il codice è pronto, ma alcune impostazioni si fanno solo dalle console di GitHub, Firebase e Google Cloud.
-
-### 1. Fai il merge della Pull Request su `main`
-
-Su GitHub apri la Pull Request del branch `claude/serene-carson-gwg6c3` e premi **Merge pull request**.
-Il merge avvia il workflow di deploy. Se lo fai prima dei passi 2 e 3, la prima esecuzione fallirà: nessun problema, al termine del passo 3 rilanciala da **Actions → Deploy su GitHub Pages → Run workflow**.
-
-### 2. Aggiungi i GitHub Secrets (7 di Firebase + 1 per USDA)
-
-Nel repository vai su **Settings → Secrets and variables → Actions → New repository secret** e crea questi secret (nomi esatti):
-
-| Nome del secret | Dove trovi il valore |
-|---|---|
-| `VITE_FIREBASE_API_KEY` | `apiKey` |
-| `VITE_FIREBASE_AUTH_DOMAIN` | `authDomain` (di solito `contacalorie-28e2d.firebaseapp.com`) |
-| `VITE_FIREBASE_PROJECT_ID` | `projectId` → `contacalorie-28e2d` |
-| `VITE_FIREBASE_STORAGE_BUCKET` | `storageBucket` |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | `messagingSenderId` |
-| `VITE_FIREBASE_APP_ID` | `appId` |
-| `VITE_FIREBASE_MEASUREMENT_ID` | `measurementId` (Analytics non viene inizializzato, ma la variabile è prevista) |
-| `VITE_USDA_API_KEY` | chiave gratuita di USDA FoodData Central (vedi [Ricerca alimenti](#ricerca-alimenti-fonti-e-fallback)) |
-
-I valori Firebase sono in **Firebase Console → ⚙️ Impostazioni progetto → Generali → Le tue app → (app web) → Configurazione SDK → Config**. Se non hai ancora un'app web, creala con l'icona `</>`.
-
-Per `VITE_USDA_API_KEY`:
-1. Registrati gratis su https://fdc.nal.usda.gov/api-key-signup (bastano nome ed email): la chiave arriva subito via email.
-2. Aggiungila come secret `VITE_USDA_API_KEY` (stessa schermata degli altri).
-3. Rilancia il deploy da **Actions → Deploy su GitHub Pages → Run workflow** (o fai un push su `main`).
-
-Senza questo secret l'app usa la chiave pubblica `DEMO_KEY`, che ha limiti molto bassi (circa 30 richieste l'ora e 50 al giorno per indirizzo IP): la ricerca USDA smetterebbe presto di rispondere. La chiave personale permette 1.000 richieste l'ora. Come la API key di Firebase, finisce nel JavaScript pubblicato: è normale per una chiave di sola lettura su dati pubblici.
-
-### 3. Abilita GitHub Pages con sorgente "GitHub Actions"
-
-**Settings → Pages → Build and deployment → Source: GitHub Actions**.
-
-### 4. Autorizza il dominio di GitHub Pages in Firebase Authentication
-
-**Firebase Console → Authentication → Impostazioni (Settings) → Domini autorizzati → Aggiungi dominio** e inserisci:
-
-```
-samuelefbn.github.io
-```
-
-(in generale `TUO-USERNAME.github.io`, senza `https://` e senza `/contacalorie`). `localhost` è già presente di default.
-
-Controlla anche che il secret `VITE_FIREBASE_AUTH_DOMAIN` sia **esattamente** `contacalorie-28e2d.firebaseapp.com` (senza `https://` e senza `/` finale): è il dominio che apre la finestra di accesso di Google. Se manca il dominio autorizzato l'accesso fallisce con `auth/unauthorized-domain`; se `authDomain` è sbagliato la finestra di Google mostra un errore o non si apre. Dopo aver corretto un secret, rilancia il deploy (**Actions → Deploy su GitHub Pages → Run workflow**).
-
-### 5. Pubblica le regole di sicurezza di Firestore
-
-1. Apri il file [`firestore.rules`](firestore.rules) di questo repository e copiane **tutto** il contenuto.
-2. **Firebase Console → Firestore Database → scheda Regole**.
-3. Sostituisci il testo esistente con quello copiato e premi **Pubblica**.
-
-**Ripeti questo passo ogni volta che `firestore.rules` cambia.** L'ultima modifica aggiunge i campi dei "miei alimenti" (`type`, `origin`, `useCount`, `lastUsedAt`, `servingGrams`, `source`), la coda `pendingScans` dei codici da completare e il campo `onboarded` del profilo: **senza ripubblicare, salvare un prodotto scansionato o aggiungere al diario dà "Permesso negato"** (e offline le modifiche verrebbero rifiutate al ritorno della rete).
-
-Senza questo passo l'app riceverà errori "Permesso negato". Le regole permettono a ciascun utente di leggere e scrivere **solo** i documenti sotto `users/{il-suo-uid}` e verificano tipi e limiti dei campi (data, pasto, grammi, calorie non negative…). Tutto il resto è negato.
-
-### 6. Limita la API key dalla Google Cloud Console
-
-La API key di Firebase non è un segreto (finisce comunque nel JavaScript pubblicato), ma va limitata così che nessuno possa usarla da altri siti.
-
-1. Apri [Google Cloud Console → API e servizi → Credenziali](https://console.cloud.google.com/apis/credentials?project=contacalorie-28e2d) (progetto `contacalorie-28e2d`).
-2. Apri la chiave usata dall'app (di solito **"Browser key (auto created by Firebase)"**: è quella con lo stesso valore di `VITE_FIREBASE_API_KEY`).
-3. In **Restrizioni delle applicazioni** scegli **Siti web** (referrer HTTP) e aggiungi:
-   ```
-   http://localhost:5173/*
-   http://localhost:4173/*
-   https://samuelefbn.github.io/*
-   https://contacalorie-28e2d.firebaseapp.com/*
-   ```
-   Il dominio `firebaseapp.com` serve perché il popup di accesso Google gira lì. Se usi anche Firebase Hosting aggiungi `https://contacalorie-28e2d.web.app/*`.
-4. (Consigliato) In **Restrizioni API** scegli **Limita chiave** e seleziona: *Identity Toolkit API*, *Token Service API*, *Cloud Firestore API*.
-5. **Salva**. Le modifiche possono richiedere qualche minuto.
-
-Fatto: apri https://samuelefbn.github.io/contacalorie/, accedi con Google e completa il profilo.
-
----
-
-## Problemi di accesso
-
-L'accesso usa **solo la finestra (popup) di Google**, aperta direttamente al tocco su "Accedi con Google". L'app non usa più il reindirizzamento (`signInWithRedirect`): è ospitata su GitHub Pages, un dominio diverso da `authDomain` (`contacalorie-28e2d.firebaseapp.com`). Su Safari/iOS e nei browser delle app lo storage è separato per sito, quindi il reindirizzamento perdeva il suo stato ("Unable to process request due to missing initial state…"). L'accesso viene salvato sul dispositivo (localStorage, con IndexedDB e sessionStorage come riserva): non serve rifarlo a ogni apertura.
-
-- **iPhone / iPad**: apri il sito in **Safari** (o Chrome) e tocca "Accedi con Google": si apre una finestra di Google; dopo l'accesso si chiude da sola e torni all'app. Se non si apre nulla, vai in **Impostazioni → Safari** e disattiva **"Blocca finestre a comparsa"** (Block Pop-ups), poi tocca **Riprova**. Con "Blocca cookie" attivo l'accesso può fallire: disattivalo o usa Chrome.
-- **App installata sulla schermata Home**: l'accesso funziona come in Safari. Se fallisce, fai l'accesso una volta in Safari, poi riapri l'app.
-- **Link aperto da WhatsApp, Instagram, Facebook, Messenger, TikTok, LINE, LinkedIn (browser interni)**: Google blocca l'accesso in questi browser ("disallowed_useragent"), quindi l'app mostra **"Per accedere apri questo link in Safari o Chrome"**, disattiva il pulsante e offre **"Copia link"**. In alternativa usa il menu dell'app (⋯ o ↗) e scegli **"Apri nel browser"** / **"Apri in Safari"**.
-- **Popup bloccati (computer o Android)**: compare "La finestra di accesso di Google non si è aperta" con il pulsante **Riprova**. Se si ripete, consenti i popup per `samuelefbn.github.io` dall'icona nella barra degli indirizzi.
-- **Finestra chiusa per errore**: nessun messaggio, basta toccare di nuovo "Accedi con Google".
-- **"auth/unauthorized-domain"**: il dominio GitHub Pages non è tra i domini autorizzati (vedi passo 4).
-
-**Come provarlo su iPhone**: apri https://samuelefbn.github.io/contacalorie/ in Safari, tocca "Accedi con Google", scegli l'account e verifica di arrivare al diario; chiudi Safari, riaprilo e controlla di essere ancora collegato. Poi invia il link a te stesso su WhatsApp, aprilo da lì e controlla che compaia l'avviso con "Copia link" e il pulsante di accesso disattivato. Infine prova da Chrome su iPhone e, se l'hai installata, dall'app sulla schermata Home.
+> Documentazione tecnica completa in [`docs/`](docs/README.md). Per assistenti AI: [`CLAUDE.md`](CLAUDE.md) e [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md).
 
 ## Funzionalità
 
-- **Login con Google** e **account privati**: ogni utente vede solo i propri dati (garantito dalle regole Firestore, non solo dall'interfaccia). Al primo accesso un breve **onboarding** (peso, altezza, età, sesso, attività, obiettivo). Nella sezione **Account**: foto, nome, email, ultimo accesso, **Esci** (logout sicuro per dispositivi condivisi), **Esporta i miei dati** (JSON + alimenti in CSV) ed **Elimina il mio account e tutti i miei dati**.
-- **I miei alimenti**: ogni prodotto scansionato e ogni alimento aggiunto al diario viene salvato tra i tuoi alimenti, senza doppioni, e compare per primo nella ricerca (vedi sotto).
-- **Profilo e obiettivi**: sesso, età, altezza, peso, livello di attività e obiettivo (dimagrire / mantenere / aumentare). Il fabbisogno è calcolato con la formula di **Mifflin-St Jeor** × fattore di attività (−500 kcal per dimagrire, +300 per aumentare, con una soglia minima di sicurezza) e si può sovrascrivere a mano. Target di proteine, carboidrati e grassi modificabili, con calcolo automatico.
-- **Diario giornaliero** diviso in colazione, pranzo, cena e spuntini: nome, grammi, kcal e macro per ogni voce. Tocca una voce per cambiare quantità, pasto o giorno, oppure eliminarla (con **Annulla**).
-- **Ricerca alimenti** mentre scrivi, tra i tuoi alimenti e su più fonti con valori reali ([Open Food Facts](https://world.openfoodfacts.org) e [USDA FoodData Central](https://fdc.nal.usda.gov), vedi sotto), per nome o **codice a barre** (scanner con la fotocamera, o inserimento del codice a mano), più **inserimento manuale** con valori per 100 g o per la quantità consumata.
-- **Alimenti personali, preferiti e ricette**: salva con la ⭐ gli alimenti ricorrenti, crea ricette da ingredienti (con peso finale da cotto e numero di porzioni) o salva un intero pasto come ricetta. Gli **ultimi usati** si riaggiungono con un tap (pulsante **+**).
-- **Dashboard**: anello con calorie consumate vs obiettivo, calorie rimanenti (o in eccesso) e barre dei macro.
-- **Storico**: grafico delle calorie degli ultimi 7/30 giorni con linea dell'obiettivo, media giornaliera, **media settimanale**, giorni entro l'obiettivo; **registrazione e grafico del peso**.
-- **Navigazione tra i giorni**: precedente / successivo, calendario e "Torna a oggi".
-- **Esportazione CSV** di diario e peso (separatore `;` e virgola decimale, si apre direttamente in Excel in italiano).
-- **PWA offline-first**: installabile, tema chiaro/scuro (o di sistema); si apre e funziona **senza rete** e sincronizza da sola al ritorno della connessione, con un indicatore nell'header (vedi sotto).
+- **Accesso con Google** e **dati privati**: ogni utente vede solo i propri dati, garantito dalle regole di Firestore. Al primo accesso c'è un breve **onboarding**.
+- **Diario giornaliero** diviso in colazione, pranzo, cena e spuntini, con kcal e macro per voce; si modifica o si elimina (con **Annulla**).
+- **Dashboard** del giorno: anello delle calorie rimanenti o in eccesso e barre di proteine, carboidrati e grassi.
+- **Obiettivo calorico** con la formula di **Mifflin-St Jeor** × fattore di attività (−500 kcal per dimagrire, +300 per aumentare, soglia minima di sicurezza), impostabile anche a mano, con target dei macro.
+- **Ricerca alimenti** mentre scrivi, su tre fonti con valori reali:
+  - i tuoi alimenti;
+  - un dataset di circa 384 alimenti generici italiani generato da [USDA FoodData Central](https://fdc.nal.usda.gov), più USDA live;
+  - i prodotti confezionati di [Open Food Facts](https://world.openfoodfacts.org).
 
-## I miei alimenti
+  I nomi dei generici sono in italiano nel formato **"Categoria - Alimento (dettaglio)"**, per esempio `Frutta - Mela (Fuji, con buccia, cruda)`.
+- **Scanner del codice a barre** (fotocamera o codice digitato). Ogni prodotto scansionato viene salvato senza doppioni; offline c'è **"Salva per dopo"**.
+- **I miei alimenti, preferiti e ricette**: tutto ciò che usi diventa ricercabile per primo; le ricette si creano dagli ingredienti o da un pasto intero.
+- **Storico** di 7 o 30 giorni con grafico, media giornaliera e settimanale; **registrazione e grafico del peso**.
+- **Esportazione** in CSV (diario, peso, alimenti) e JSON; **eliminazione dell'account** con tutti i dati.
+- **Offline-first**: indicatore di sincronizzazione nell'header, voci non ancora sincronizzate segnate con un pallino.
+- Tema chiaro, scuro o di sistema.
 
-- Dopo ogni **scansione riuscita** (Open Food Facts) il prodotto viene salvato in `users/{uid}/foods` con il **codice a barre come id del documento**: lo stesso prodotto non può esistere due volte. Se scansioni di nuovo lo stesso codice, l'app **non chiama più Open Food Facts**: legge la copia locale (o Firestore) e aggiorna solo `lastUsedAt` e `useCount`.
-- Anche gli **alimenti generici** e quelli **inseriti a mano**, una volta aggiunti al diario, vengono salvati. Stessa chiave = stesso alimento: codice a barre, poi la chiave del dataset (es. `gen-frutta-mela`) o di USDA (`usda-171688`), altrimenti nome + marca normalizzati (`n-torta-di-mele--nonna-pia`). Se l'alimento esiste già si aggiornano solo `lastUsedAt` e `useCount`.
-- Nella ricerca la sezione **"I miei alimenti"** viene prima di generici e confezionati online. È una ricerca **sul dispositivo** (Firestore non fa ricerca testuale): la lista è già in memoria grazie al listener ed è cercata con Fuse.js su nome, marca e codice a barre, ignorando accenti e maiuscole, tollerando gli errori di battitura. Ordine: prima chi contiene tutte le parole, poi per **uso recente e frequente** (punteggio `(1 + useCount) × e^(−giorni dall'ultimo uso / 14)`). I prodotti scansionati si mostrano come **"Nome prodotto - Marca"**.
-- **Scansione offline**: se il codice è già tra i tuoi alimenti funziona normalmente. Se non lo è, l'app lo dice chiaramente e offre **"Salva per dopo"**: il codice va nella coda `users/{uid}/pendingScans` ("Da completare" nella pagina Alimenti). Appena torna la connessione l'app recupera i dati da Open Food Facts, completa la voce e ti avvisa con una notifica; se il codice non esiste su Open Food Facts resta in coda come "non trovato", da creare a mano.
-- Tipi salvati nel campo `type`: `packaged` (confezionato), `generic` (generico), `custom` (personale), `recipe` (ricetta); origine nel campo `origin`: `scan` (scansione), `search` (ricerca), `manual` (a mano), `recipe`.
+## Schermate
 
-## Offline e sincronizzazione
+| Schermata | Cosa contiene |
+|---|---|
+| **Accesso** | logo, "Accedi con Google", avvisi se sei offline o in un browser interno (WhatsApp, Instagram…) |
+| **Benvenuto** (primo accesso) | sesso, età, altezza, peso, attività, obiettivo; "Crea profilo" o "Salta per ora" |
+| **Diario** | giorno precedente o successivo e calendario; anello delle kcal e barre dei macro; i quattro pasti con le voci e il pulsante **+** |
+| **Aggiungi alimento** | schede Cerca (con scanner), Miei, Recenti, Manuale; poi quantità con anteprima di kcal e macro |
+| **Alimenti** | i miei alimenti e le ricette, filtri, preferiti, codici "da completare" |
+| **Storico** | grafico delle calorie, medie, tabella settimanale; sezione peso con grafico |
+| **Profilo** | account (foto, email, ultimo accesso, Esci), profilo e obiettivi, tema, installazione, esportazioni, eliminazione dell'account |
 
-- **Firestore offline**: `initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) })` (SDK modulare, sintassi verificata sulla versione installata, `firebase` 12). Tutte le scritture (diario, alimenti, peso, profilo) funzionano offline: Firestore le mette in coda e le invia da solo al ritorno della rete. L'interfaccia **non attende mai** la conferma del server (aggiornamento ottimistico tramite i listener); gli errori vengono comunque mostrati.
-- **Service worker** (vite-plugin-pwa / Workbox): mette in cache l'app shell e tutti gli asset, così l'app si apre anche senza rete; le risposte di Open Food Facts e USDA già viste sono in cache con strategia **stale-while-revalidate** (subito dalla cache, aggiornate in background).
-- **Indicatore nell'header**: "Online", "Offline", "Sincronizzazione in corso (N modifiche in attesa)", "Tutto sincronizzato". Il conteggio viene dai listener con `includeMetadataChanges` (`hasPendingWrites`) su profilo, alimenti, peso, codici da completare e voci di diario degli ultimi 90 giorni (le modifiche a voci più vecchie non sono contate). Le voci non ancora sincronizzate hanno un **pallino arancione**.
-- **Conflitti: vince l'ultima scrittura** (last write wins) per documento, il comportamento standard di Firestore. Se modifichi lo stesso documento da due dispositivi offline, al ritorno della rete resta l'ultima scrittura arrivata al server. Le voci del diario hanno **id generato sul dispositivo** (`doc()` senza id), quindi una voce creata offline non viene mai duplicata. Caso limite: se un alimento salvato su un altro dispositivo non è ancora arrivato su questo e lo usi offline, viene ricreato e al ritorno della rete sovrascrive quello esistente (preferito e conteggio d'uso ripartono).
-- **Cosa non funziona offline** (con un messaggio chiaro): il **primo accesso** (serve internet), la ricerca di prodotti **mai visti prima** su Open Food Facts/USDA, la scansione di **codici nuovi** (c'è "Salva per dopo"), l'esportazione completa e l'eliminazione dell'account.
-- ⚠️ **Limite del browser**: le modifiche non ancora sincronizzate vivono solo nel browser. Se **cancelli i dati del sito**, usi la **navigazione privata** (che li cancella alla chiusura) o esci dall'account offline, **quelle modifiche si perdono**.
+Dettagli e schema di navigazione: [`docs/UI_SCREENS.md`](docs/UI_SCREENS.md).
 
-### Provare l'offline a mano
+## Avvio rapido (sviluppo)
 
-1. Apri l'app (in locale con `npm run dev` o quella pubblicata), accedi e aspetta "Online" nell'header.
-2. **DevTools (F12) → Network → Throttling: Offline** (oppure scheda Application → Service Workers → "Offline").
-3. L'header mostra **Offline**. Aggiungi due o tre voci al diario, registra il peso, scansiona (o digita) un codice mai visto e premi **Salva per dopo**: l'header diventa "Offline · N modifiche in attesa" e le voci hanno il pallino arancione.
-4. Ricarica la pagina ancora offline: l'app si apre comunque (service worker) e le voci ci sono (cache di Firestore).
-5. Rimetti **No throttling**: l'header passa a "Sincronizzazione in corso (N modifiche in attesa)" e poi a **"Tutto sincronizzato"**; i pallini spariscono, il codice salvato per dopo viene completato con una notifica. In **Firebase Console → Firestore** trovi i documenti.
-
-## Account e privacy
-
-- Chi non ha fatto l'accesso vede solo la schermata di login: nessun dato è accessibile senza login.
-- Tutti i dati stanno sotto `users/{uid}/...` e le regole vietano letture e scritture tra utenti diversi (verificato con i test sull'emulatore, `npm run test:rules`).
-- **Logout sicuro** (dispositivi condivisi): prima di uscire, se ci sono modifiche non sincronizzate e sei online l'app attende `waitForPendingWrites`; se sei offline ti avvisa che andranno perse e chiede conferma. Poi esce, esegue `terminate(db)` e `clearIndexedDbPersistence(db)`, svuota le cache dell'app (ricerche in `sessionStorage`, chiavi di Firebase in `localStorage`, cache del service worker con le risposte di Open Food Facts/USDA) e ricarica: il prossimo utente non trova nulla del precedente. Resta solo la preferenza del tema. Se l'uscita avviene in un'altra scheda, anche le altre schede puliscono i dati e si ricaricano.
-- **Elimina il mio account**: doppia conferma (finestra di conferma + scrivere `ELIMINA`), poi cancella le sottocollezioni (`entries`, `foods`, `weights`, `pendingScans`), il profilo e infine l'account di Firebase Authentication. Se Firebase risponde `auth/requires-recent-login`, l'app chiede di rifare l'accesso con Google e completa l'eliminazione. Serve la connessione.
-
-## Ricerca alimenti: fonti e fallback
-
-Open Food Facts è un database di **prodotti confezionati**: non copre bene gli alimenti sfusi (frutta, verdura, carne fresca, pesce, uova, legumi, cereali). Per questo la ricerca ha due binari, interrogati **sempre in parallelo** (un errore di uno non blocca l'altro), e i risultati sono mostrati in due sezioni:
-
-**1. Alimenti generici** (in alto, fonte primaria)
-1. **I miei alimenti** (sezione a parte, in cima: vedi [I miei alimenti](#i-miei-alimenti)) e le voci di diario recenti non ancora salvate: istantanei, anche offline.
-2. **Dataset generico incluso nell'app** (`src/data/genericFoods.it.json`): circa 390 alimenti della cucina italiana con nomi e sinonimi in italiano, varianti crudo/cotto per carni e pesci, valori per 100 g presi da USDA FoodData Central. Funziona offline e con le API giù. Ricerca tollerante: senza accenti, singolare/plurale (*mele* → *mela*, *zucchine* → *zucchina*), senza preposizioni, con priorità *esatto > inizia con > contiene > approssimato* (errori di battitura, con Fuse.js).
-3. **USDA FoodData Central live** (`api.nal.usda.gov/fdc/v1/foods/search`, dataset *Foundation* e *SR Legacy*, 15 risultati) per ciò che il dataset non copre: la query viene tradotta con un dizionario italiano → inglese (*mela* → *apple*, *salsiccia* → *pork sausage*) e le descrizioni USDA vengono riconvertite in italiano (vedi sotto).
-
-**2. Prodotti confezionati** (sotto): Open Food Facts, prima **Search-a-licious** (`search.openfoodfacts.org`) e, se fallisce o non trova nulla, la **ricerca classica** (`it.openfoodfacts.org/cgi/search.pl`, spesso sovraccarica: risponde 503 senza intestazione CORS, quindi qui si ritentano anche gli errori di rete).
-
-**Nomi degli alimenti generici** — sempre in italiano, nel formato `Categoria - Alimento, taglio (dettagli)`:
-`Frutta - Mela`, `Frutta - Mela (Fuji, con buccia, cruda)`, `Carne - Pollo, petto (crudo)`, `Carne - Maiale, salsiccia (cotta)`, `Verdura - Zucchina (cruda)`.
-Le categorie sono un elenco chiuso (Frutta, Verdura, Legumi, Cereali e derivati, Carne, Salumi, Pesce, Uova, Latticini, Grassi e oli, Frutta secca, Dolci, Bevande, Altro). Categoria, nome base, taglio e dettagli sono salvati come campi separati (`GenericFoodDisplay`) e composti con `formatFoodLabel()`; nel diario e nei preferiti viene salvato il nome italiano.
-
-**Traduzione delle descrizioni USDA** (`src/lib/foodSearch/usdaToItalian.ts`): la descrizione (es. *"Apples, raw, fuji, with skin"*) viene divisa in token e ogni token è tradotto con dizionari di alimenti base, tagli, stati di cottura, varietà e altre informazioni, accordando gli aggettivi (*mela cruda*, *petto crudo*). **Se un token non è riconosciuto la voce viene scartata**, mai mostrata in inglese: in sviluppo ogni token mancante è registrato in console, e lo script di generazione ne elenca il riepilogo, così si possono ampliare i dizionari.
-
-**Ordine dei risultati**: prima le voci il cui nome base coincide con la ricerca (per *mela*: `Frutta - Mela`, poi varietà e informazioni in ordine alfabetico, poi le cotture, crudo prima di cotto), poi gli altri alimenti semplici che contengono la parola. I **prodotti trasformati** (dolci e prodotti da forno, succhi, creme, marmellate, snack, salumi, piatti pronti; riconosciuti dalla categoria USDA e dal nome) compaiono solo se cercati esplicitamente (*succo di mela*, *strudel*, *torta di mele*) o aprendo **"Mostra anche prodotti trasformati"**. Gli alimenti per l'infanzia sono esclusi. Se due voci producono lo stesso nome italiano ne resta una sola (prima il dataset, poi USDA *Foundation*).
-
-Le righe mostrano il nome in grassetto e sotto kcal, proteine, carboidrati e grassi per 100 g (per i confezionati la marca in secondo piano); non c'è l'indicazione della fonte. Per gli alimenti generici ci sono **porzioni rapide indicative** (es. *1 mela media ≈ 180 g*, *1 uovo medio ≈ 50 g*), sempre modificabili in grammi.
-
-Regole comuni:
-- **Timeout di 8 secondi** per richiesta e **fino a 2 retry** con attesa crescente (0,5 s, 1 s) solo su 5xx, 429 e timeout.
-- La ricerca online parte **500 ms dopo che smetti di scrivere** (minimo 2 caratteri) e annulla quella precedente; i generici del dataset compaiono subito.
-- **Cache** dei risultati per query e per fonte, in memoria e in `sessionStorage`, per **24 ore**.
-- **Solo valori reali**: kcal, proteine, carboidrati e grassi per 100 g dichiarati dalla fonte. Un risultato con uno di questi valori mancante viene scartato (non si mette 0), così come valori incoerenti (kcal negative o oltre 950, un macro oltre 100 g per 100 g, somma dei macro oltre 100 g, kcal molto inferiori a quanto i macro impongono).
-- Il messaggio d'errore compare **solo se tutte le fonti falliscono**, con **Riprova** e **Inserisci a mano**. Se fallisce una sola fonte compare una nota discreta (es. *"Prodotti confezionati non disponibili al momento"*) e restano visibili gli altri risultati.
-- Il **codice a barre** usa `world.openfoodfacts.org/api/v2/product/{codice}.json` con gli stessi timeout e retry; se OFF non risponde lo dice e propone l'inserimento manuale.
-
-### Generare (o aggiornare) il dataset degli alimenti generici
-
-I valori del dataset arrivano **solo dall'API USDA**, tramite `scripts/build-generic-foods.ts`: l'elenco degli alimenti, con sinonimi, categoria, stato (crudo/cotto…) e porzioni indicative, è in `scripts/genericFoods.defs.ts` e non contiene valori nutrizionali. Per ogni alimento lo script cerca su USDA (Foundation e SR Legacy), sceglie la voce la cui descrizione corrisponde (es. *"Chicken, broilers or fryers, breast, meat only, raw"*) e ne copia i valori per 100 g, con data di generazione e `fdcId` originale. Se non trova una voce compatibile, l'alimento viene saltato e segnalato (mai inventato). Il riepilogo elenca anche i token delle descrizioni USDA che il traduttore non riconosce.
-
-**Modo semplice, da GitHub** (consigliato):
-1. Assicurati di avere il secret `VITE_USDA_API_KEY` (vedi passo 2 in alto).
-2. Vai su **Actions → "Genera alimenti generici (USDA)" → Run workflow → Run workflow**.
-3. In 1-2 minuti il workflow genera il dataset, esegue i test, lo committa su `main` e ripubblica il sito. Nella pagina dell'esecuzione trovi una tabella con, per ogni alimento, la voce USDA scelta e i valori, più l'elenco di quelli non trovati, ciascuno con le prime voci restituite da USDA (utili per correggere query e termini in `scripts/genericFoods.defs.ts`).
-4. Per provare modifiche alle definizioni senza toccare `main`, avvia il workflow scegliendo il tuo branch in **Use workflow from**: genera il dataset e il riepilogo, ma non committa e non ripubblica.
-
-**In locale**:
-```bash
-VITE_USDA_API_KEY=la-tua-chiave npm run build:foods   # oppure metti la chiave nel file .env
-git add src/data/genericFoods.it.json && git commit -m "Aggiorna dataset alimenti generici"
-```
-
-Gli alimenti non presenti nel dataset arrivano da USDA live, tradotti in italiano (le voci con termini non tradotti vengono scartate), e dai tuoi alimenti. Alcuni alimenti italiani (prosciutto crudo, orata, mascarpone) non esistono in USDA Foundation/SR Legacy: si trovano tra i prodotti confezionati.
-
-## Sviluppo in locale
-
-Requisiti: Node.js 20.19+ (consigliato 22).
+Requisiti: Node.js 20.19 o superiore (consigliato 22).
 
 ```bash
 npm install
-cp .env.example .env     # poi inserisci i valori reali, compresa VITE_USDA_API_KEY (il file .env è nel .gitignore)
+cp .env.example .env     # inserisci i valori Firebase e VITE_USDA_API_KEY (il file .env non va mai committato)
 npm run dev              # http://localhost:5173/contacalorie/
+npm test                 # unit test (Vitest)
+npm run build            # build di produzione in dist/
 ```
 
-Altri comandi:
+Altri comandi (`npm run lint`, `npm run test:rules`, `npm run build:foods`, `npm run docs:check`…) ed emulatori Firebase: [`docs/DEPLOY_AND_CONFIG.md`](docs/DEPLOY_AND_CONFIG.md).
 
-| Comando | Cosa fa |
+## Pubblicazione: cosa configurare
+
+Il deploy su GitHub Pages è automatico a ogni push su `main`. Una sola volta, a mano:
+
+1. **GitHub Secrets**: le 7 variabili Firebase e `VITE_USDA_API_KEY` (Settings → Secrets and variables → Actions).
+2. **GitHub Pages**: Settings → Pages → Source: **GitHub Actions**.
+3. **Firebase Authentication**: provider Google attivo e `samuelefbn.github.io` tra i **domini autorizzati**; `VITE_FIREBASE_AUTH_DOMAIN` = `<progetto>.firebaseapp.com`.
+4. **Regole di Firestore**: incolla `firestore.rules` in Firebase Console → Firestore → Regole → **Pubblica**. Da ripetere **ogni volta che il file cambia**, altrimenti compare "Permesso negato".
+5. **API key** limitata per referrer e per API dalla Google Cloud Console.
+6. **Dataset dei generici**: Actions → "Genera alimenti generici (USDA)" → Run workflow.
+
+Procedura completa, tabella delle variabili e checklist: [`docs/DEPLOY_AND_CONFIG.md`](docs/DEPLOY_AND_CONFIG.md).
+
+## Problemi di accesso
+
+L'accesso usa **solo la finestra (popup) di Google**, aperta direttamente al tocco su "Accedi con Google". L'app non usa il reindirizzamento (`signInWithRedirect`): è ospitata su GitHub Pages, un dominio diverso da `authDomain`, e su Safari/iOS e nei browser delle app il reindirizzamento perdeva il suo stato ("Unable to process request due to missing initial state…"). L'accesso resta salvato sul dispositivo.
+
+- **iPhone / iPad**: apri il sito in **Safari** (o Chrome) e tocca "Accedi con Google"; dopo l'accesso la finestra si chiude da sola. Se non si apre nulla: **Impostazioni → Safari** → disattiva **"Blocca finestre a comparsa"**, poi **Riprova**. Con "Blocca cookie" attivo l'accesso può fallire.
+- **App installata sulla schermata Home**: funziona come in Safari. Se fallisce, accedi una volta in Safari e riapri l'app.
+- **Link aperto da WhatsApp, Instagram, Facebook, Messenger, TikTok, LINE, LinkedIn**: Google blocca l'accesso in questi browser interni. L'app mostra **"Per accedere apri questo link in Safari o Chrome"** con **"Copia link"** e disattiva il pulsante. In alternativa usa il menu dell'app (⋯ o ↗) → "Apri nel browser".
+- **Popup bloccati (computer o Android)**: compare "La finestra di accesso di Google non si è aperta" con **Riprova**; consenti i popup per il sito.
+- **Finestra chiusa per errore**: nessun messaggio, basta toccare di nuovo "Accedi con Google".
+- **`auth/unauthorized-domain`**: aggiungi il dominio GitHub Pages ai domini autorizzati di Firebase Authentication.
+
+**Come provarlo su iPhone**:
+1. Apri il sito in Safari, accedi e verifica di arrivare al diario.
+2. Chiudi e riapri Safari: devi essere ancora collegato.
+3. Apri il link da WhatsApp: deve comparire l'avviso con "Copia link".
+4. Prova anche da Chrome e dall'app sulla schermata Home.
+
+## Provare l'offline a mano
+
+1. Apri l'app, accedi e aspetta "Online" nell'header.
+2. **DevTools (F12) → Network → Throttling: Offline** (oppure Application → Service Workers → "Offline").
+3. L'header mostra **Offline**. Aggiungi due o tre voci, registra il peso, scansiona o digita un codice mai visto e premi **Salva per dopo**: l'header diventa "Offline · N modifiche in attesa" e le voci hanno il pallino arancione.
+4. Ricarica ancora offline: l'app si apre (service worker) e le voci ci sono (cache di Firestore).
+5. Rimetti **No throttling**: "Sincronizzazione in corso (N modifiche in attesa)", poi **"Tutto sincronizzato"**. I pallini spariscono e il codice salvato per dopo viene completato con una notifica.
+
+Cosa non funziona offline e come si gestiscono i conflitti: [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) e [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md).
+
+## Documentazione
+
+| Documento | Contenuto |
 |---|---|
-| `npm run build` | build di produzione per GitHub Pages (in `dist/`) |
-| `npm run preview` | serve la build in locale |
-| `npm run lint` | ESLint |
-| `npm test` | unit test (Vitest) di calcoli, date, CSV, ricerca alimenti, miei alimenti, coda dei codici, pulizia dei dati locali e statistiche |
-| `npm run test:rules` | test delle regole Firestore sull'emulatore (avvia `firebase-tools` con `npx`, serve Java 11+) |
-| `npm run build:foods` | genera `src/data/genericFoods.it.json` da USDA (serve `VITE_USDA_API_KEY`) |
-| `npm run build:firebase` | build con `base` `/` per Firebase Hosting |
+| [`docs/README.md`](docs/README.md) | indice e ordine di lettura |
+| [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) | il progetto in una pagina |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | livelli, cartelle, routing, stato, PWA e offline |
+| [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) | collezioni Firestore, regole, sincronizzazione |
+| [`docs/FLOWS.md`](docs/FLOWS.md) | diagrammi dei flussi principali |
+| [`docs/SEARCH_PIPELINE.md`](docs/SEARCH_PIPELINE.md) | ricerca alimenti, dizionari, dataset |
+| [`docs/FUNCTIONS.md`](docs/FUNCTIONS.md) | riferimento di funzioni, hook e componenti |
+| [`docs/UI_SCREENS.md`](docs/UI_SCREENS.md) | schermate e navigazione |
+| [`docs/DEPLOY_AND_CONFIG.md`](docs/DEPLOY_AND_CONFIG.md) | variabili, workflow, Firebase, checklist |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | decisioni architetturali |
+| [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md) | problemi noti e idee future |
+| [`docs/HOW_TO_WORK_WITH_AI.md`](docs/HOW_TO_WORK_WITH_AI.md) | come riprendere il lavoro con un assistente AI |
 
-**Emulatori Firebase (facoltativo)**: per provare tutto in locale senza toccare i dati veri, avvia `firebase emulators:start --only auth,firestore` e poi `VITE_USE_EMULATORS=true npm run dev`.
+## Sicurezza e privacy
 
-## Deploy alternativo su Firebase Hosting
+- Nessuna credenziale nel codice: i valori arrivano da `.env` (ignorato da git) in locale e dai GitHub Secrets in CI. Non committare mai `.env` né file di service account.
+- Le regole di Firestore isolano i dati per utente (`request.auth.uid == uid`), validano tipi e limiti dei campi e bloccano qualsiasi altro percorso; sono provate con l'emulatore (`npm run test:rules`).
+- **Logout sicuro** per i dispositivi condivisi: prima di uscire l'app sincronizza (o avvisa se sei offline), poi cancella la copia locale dei dati e le cache.
+- Il CSV esportato neutralizza i testi che inizierebbero con `=`, `+`, `-`, `@` ("CSV injection").
+- Analytics non viene inizializzato.
 
-Il repository include `firebase.json` e `.firebaserc` (copia di `.firebaserc.example`, progetto `contacalorie-28e2d`). Con la [Firebase CLI](https://firebase.google.com/docs/cli):
-
-```bash
-npm install -g firebase-tools
-firebase login
-firebase deploy --only hosting            # esegue in automatico `npm run build:firebase`
-firebase deploy --only firestore:rules    # alternativa al passo 5 (pubblica le regole)
-firebase deploy --only firestore:indexes  # facoltativo, vedi sotto
-```
-
-Serve un file `.env` locale con i valori reali. Ricordati di aggiungere `contacalorie-28e2d.web.app` ai domini autorizzati se non c'è già.
-
-## Struttura del progetto
-
-```
-.github/workflows/   ci.yml (lint/test/build sulle PR) · deploy.yml (GitHub Pages)
-                     generic-foods.yml (genera il dataset degli alimenti generici da USDA)
-scripts/             build-generic-foods.ts + genericFoods.defs.ts (elenco alimenti generici)
-public/              icone PWA e favicon
-src/
-  App.tsx            provider, autenticazione e navigazione a schede (#/diario, #/alimenti, …)
-  types.ts           tipi del modello dati
-  lib/               firebase.ts, nutrition.ts (Mifflin-St Jeor, macro), dates.ts,
-                     csv.ts, format.ts, text.ts (+ test)
-  lib/foodSearch/    ricerca alimenti: generici (dataset + USDA) e confezionati (Open Food Facts)
-                     in parallelo, dizionario IT→EN, HTTP con timeout/retry, cache, validazione (+ test)
-  data/              genericFoods.it.json (dataset generato da USDA)
-  services/          scritture su Firestore e conversione dei documenti
-  hooks/             listener in tempo reale (profilo, giorno, intervalli, alimenti, recenti, peso)
-  contexts/          Auth, Tema, Notifiche, Sincronizzazione
-  components/ui/     Button, Card, Sheet (pannello modale), campi, anello e barre di progresso…
-  components/layout/ barra di navigazione, indicatore di sincronizzazione, error boundary
-  features/
-    auth/            login e schermata "configurazione mancante"
-    account/         account, logout sicuro, onboarding, esportazione ed eliminazione dati
-    diary/           pagina diario, navigazione giorni, riepilogo, pasti, aggiunta e modifica voci
-    picker/          selettore alimenti: ricerca, scanner, miei, recenti, manuale, quantità
-    foods/           alimenti personali e ricette
-    history/         grafici calorie e peso, statistiche
-    profile/         profilo e obiettivi, tema, esportazione CSV
-firestore.rules      regole di sicurezza (test: tests/rules/, `npm run test:rules`)
-firestore.indexes.json
-firebase.json · .firebaserc · .firebaserc.example
-```
-
-## Modello dati Firestore
-
-| Percorso | Contenuto |
-|---|---|
-| `users/{uid}` | profilo e obiettivi: `displayName`, `sex`, `age`, `heightCm`, `weightKg`, `activityLevel`, `goal`, `kcalTarget`, `kcalManual`, `proteinTarget`, `carbsTarget`, `fatTarget`, `onboarded` |
-| `users/{uid}/entries/{id}` | voce di diario: `date` (`YYYY-MM-DD`), `mealType`, `name`, `brand`, `grams`, `kcal`, `protein`, `carbs`, `fat`, `per100` (valori per 100 g, per ricalcolare se cambi i grammi), `source` (`off` / `usda` / `manual` / `custom` / `recipe`), `foodId` (id tra i miei alimenti), `barcode`, `createdAt` |
-| `users/{uid}/foods/{id}` | i miei alimenti e le ricette (id = codice a barre per i prodotti scansionati): `name`, `brand`, `barcode`, `per100` (kcal, proteine, carboidrati, grassi per 100 g), `defaultGrams`, `servingGrams` (porzione del produttore), `favorite`, `kind` (`food` / `recipe`), `ingredients`, `source`, `type`, `origin`, `useCount`, `lastUsedAt`, `createdAt` |
-| `users/{uid}/pendingScans/{codice}` | codici scansionati offline da completare: `barcode`, `status` (`pending` / `not_found`), `createdAt` |
-| `users/{uid}/weights/{YYYY-MM-DD}` | peso del giorno: `date`, `kg` (l'id è la data → un valore al giorno) |
-
-**Indici**: tutte le query dell'app usano solo gli indici a campo singolo che Firestore crea automaticamente (l'ordinamento secondario avviene nel browser), quindi **non devi creare indici a mano**. `firestore.indexes.json` esclude dall'indicizzazione i campi `per100` e `ingredients`, che non vengono mai interrogati: è un'ottimizzazione facoltativa da applicare con `firebase deploy --only firestore:indexes`.
-
-## Sicurezza
-
-- Nessuna credenziale nel codice: i valori arrivano da `.env` (ignorato da git) in locale e dai GitHub Secrets in CI. Non committare mai `.env` né file di service account (sono nel `.gitignore`).
-- Le regole Firestore isolano i dati per utente (`request.auth.uid == uid`), validano tipi e limiti dei campi (per gli alimenti: kcal 0–1000 e macro 0–100 g per 100 g, nomi fino a 200 caratteri, codice a barre di 6–14 cifre uguale all'id per i prodotti scansionati) e bloccano qualsiasi altro percorso; limita la API key (passo 6).
-- Il CSV esportato neutralizza i testi che inizierebbero con `=`, `+`, `-`, `@` (protezione da "CSV injection").
-
-Dati nutrizionali: © contributori di Open Food Facts, licenza [ODbL](https://opendatacommons.org/licenses/odbl/1-0/). I valori calcolati sono stime e non sostituiscono il parere di un professionista.
+Dati nutrizionali: USDA FoodData Central e © contributori di Open Food Facts, licenza [ODbL](https://opendatacommons.org/licenses/odbl/1-0/). I valori calcolati sono stime e non sostituiscono il parere di un professionista.

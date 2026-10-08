@@ -37,7 +37,7 @@ Il prefisso e la ricerca approssimata servono solo se le parole intere non trova
 
 ## Ranking dei generici
 
-`rankGenericResults(query, results)` in `src/lib/foodSearch/genericRanking.ts` riceve `mergeGeneric(dataset, usdaLive)` (il dataset prima; da USDA live si scartano gli `fdcId` già presenti nel dataset).
+`rankGenericResults(query, results)` in `src/lib/foodSearch/genericRanking.ts` riceve da `SearchTab` il risultato di `mergeGeneric(dataset, outcome.usda)`: prima il dataset, poi USDA live senza gli `fdcId` già presenti nel dataset.
 
 1. **Deduplica per etichetta** (`dedupeByLabel`): a parità di nome italiano tiene la fonte preferita. Ordine: dataset curato (`id` che inizia con `gen:`), poi USDA `Foundation`, poi `SR Legacy`.
 2. **Livello di corrispondenza** (`matchTier`, costanti in `TIER`):
@@ -94,7 +94,7 @@ Tra i miei alimenti i prodotti con marca si mostrano come **`Nome prodotto - Mar
 `usdaToItalian(description, foodCategory?)` in `src/lib/foodSearch/usdaToItalian.ts`. Esempio: "Apples, raw, fuji, with skin" → `Frutta - Mela (Fuji, con buccia, cruda)`.
 
 1. **Token**: la descrizione si divide sulle virgole (`tokenize`); il testo tra parentesi è ignorato; i **marchi** in `BRANDS` (CHOBANI, QUAKER, MORI-NU…) vengono tolti.
-2. **Alimento base**: si cercano in `BASES` le chiavi formate dai primi 1–4 token uniti da `|` (es. `squash|summer|zucchini` → Zucchina). Se non c'è corrispondenza si riprova saltando i token in `IGNORE` ("Oil, industrial, mid-oleic, sunflower" → `oil|sunflower`). Le chiavi con prefisso di gruppo (`fish|`, `nuts|`, `seeds|`…) hanno anche un alias senza prefisso (`ALIAS_PREFIXES`).
+2. **Alimento base**: si cercano in `BASES` le chiavi formate dai primi 1–4 token uniti da `|` (es. `squash|summer|zucchini` → Zucchina). Se non c'è corrispondenza si riprova saltando i token in `IGNORE` ("Oil, industrial, mid-oleic, sunflower" → `oil|sunflower`). Le chiavi con prefisso di gruppo (`fish|`, `nuts|`, `seeds|`…) hanno anche un alias senza prefisso (`ALIAS_PREFIXES`). Gli alimenti per l'infanzia (`babyfood`) hanno `discard: true` e vengono sempre esclusi, senza contarli come non tradotti.
 3. **Token successivi**, in quest'ordine di dizionario:
    - `CONTEXT[nome base]`: significato che dipende dall'alimento (per il latte "whole" = intero);
    - `FLAVORS`: gusti, solo per i prodotti trasformati ("Strudel, apple" → alla mela);
