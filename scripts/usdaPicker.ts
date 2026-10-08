@@ -4,11 +4,15 @@ import { GLOBAL_EXCLUDE, type GenericFoodDef } from './genericFoods.defs'
 
 const DATA_TYPE_RANK: Record<string, number> = { 'SR Legacy': 0, Foundation: 1 }
 
-/** Ogni termine di `match` (con alternative "a|b") deve comparire nella descrizione; nessuno di `exclude`. */
+/**
+ * Ogni termine di `match` (con alternative "a|b") deve comparire nella descrizione; nessuno di `exclude`.
+ * Le esclusioni generali non valgono se un termine le richiede (es. "restaurant-prepared" per l'espresso).
+ */
 export function matchesDef(def: GenericFoodDef, description: string): boolean {
   const d = description.toLowerCase()
   const required = def.match.every((term) => term.split('|').some((alt) => d.includes(alt.toLowerCase())))
-  const excluded = [...GLOBAL_EXCLUDE, ...(def.exclude ?? [])].some((x) => d.includes(x.toLowerCase()))
+  const global = GLOBAL_EXCLUDE.filter((x) => !def.match.some((m) => m.toLowerCase().includes(x)))
+  const excluded = [...global, ...(def.exclude ?? [])].some((x) => d.includes(x.toLowerCase()))
   return required && !excluded
 }
 

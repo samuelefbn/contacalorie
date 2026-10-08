@@ -40,6 +40,27 @@ describe('traduzione delle descrizioni USDA', () => {
     expect(label(desc, cat)).toBe(expected)
   })
 
+  // Descrizioni reali segnalate come non tradotte dalla prima generazione del dataset.
+  it.each([
+    ['Chicken, broilers or fryers, dark meat, thigh, meat only, raw', 'Carne - Pollo, coscia (solo polpa, cruda)'],
+    ['Oranges, raw, Florida', 'Frutta - Arancia (cruda)'],
+    ['Beef, round, eye of round, roast, separable lean only, trimmed to 1/8" fat, select, raw', 'Carne - Manzo, girello (solo parte magra, crudo)'],
+    ['Beef, chuck for stew, separable lean and fat, choice, raw', 'Carne - Manzo, spalla (cruda)'],
+    ['Potatoes, boiled, cooked without skin, flesh, without salt', 'Verdura - Patata (senza buccia, lessata)'],
+    ['Olives, green, Manzanilla, stuffed with pimiento', 'Verdura - Oliva (Manzanilla, verde, ripiena di peperone)'],
+    ['MORI-NU, Tofu, silken, firm', 'Legumi - Tofu (vellutato, compatto)'],
+    ['Cereals, QUAKER, Quick Oats, Dry', "Cereali e derivati - Fiocchi d'avena"],
+    ['Cereals ready-to-eat, RALSTON Corn Flakes', 'Cereali e derivati - Corn flakes'],
+    ['Beef, Australian, imported, grass-fed, ground, 85% lean / 15% fat, raw', 'Carne - Manzo, macinato (da pascolo, 15% grassi, crudo)'],
+    ['Yogurt, Greek, nonfat, plain, CHOBANI', 'Latticini - Yogurt (greco, magro 0%, bianco)'],
+    ['Oil, industrial, mid-oleic, sunflower', 'Grassi e oli - Olio di girasole'],
+    ['Oil, corn, peanut, and olive', 'Grassi e oli - Olio (di mais, arachidi e oliva)'],
+    ["Leavening agents, yeast, baker's, compressed", 'Altro - Lievito (di birra, fresco)'],
+  ])('traduce "%s" (marchi, origini e sigle tolti)', (desc, expected) => {
+    expect(label(desc)).toBe(expected)
+    expect(untranslatedReport()).toEqual([])
+  })
+
   it('i prodotti trasformati sono tradotti ma marcati come non primitivi', () => {
     expect(usdaToItalian('Croissants, apple', 'Baked Products')).toMatchObject({ isPrimitive: false })
     expect(label('Strudel, apple', 'Baked Products')).toBe('Dolci - Strudel (alla mela)')

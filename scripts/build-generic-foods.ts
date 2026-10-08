@@ -32,8 +32,11 @@ function loadDotEnv() {
   }
 }
 
+/** L'API rifiuta con HTTP 400 alcune query con punteggiatura (es. "trimmed to 1/8 fat"): si usano solo parole. */
+const usdaQueryText = (query: string) => query.replace(/[^\p{L}\p{N}%\s-]+/gu, ' ').replace(/\s+/g, ' ').trim()
+
 async function searchUsda(def: GenericFoodDef, apiKey: string): Promise<UsdaFood[]> {
-  const params = new URLSearchParams({ query: def.query, dataType: USDA_DATA_TYPES, pageSize: '50', api_key: apiKey })
+  const params = new URLSearchParams({ query: usdaQueryText(def.query), dataType: USDA_DATA_TYPES, pageSize: '50', api_key: apiKey })
   const body = (await fetchJson(`${USDA_SEARCH_URL}?${params}`, { timeoutMs: 20000, retries: 4, baseDelayMs: 2000 })) as {
     foods?: UsdaFood[]
   } | null
@@ -42,8 +45,16 @@ async function searchUsda(def: GenericFoodDef, apiKey: string): Promise<UsdaFood
 
 async function build(def: GenericFoodDef, apiKey: string): Promise<GenericFood | string> {
   try {
-    const picked = pickUsdaFood(def, await searchUsda(def, apiKey))
-    if (!picked) return `nessuna voce USDA compatibile (query "${def.query}", termini ${JSON.stringify(def.match)})`
+    const found = await searchUsda(def, apiKey)
+    const picked = pickUsdaFood(def, found)
+    if (!picked) {
+      // Le prime voci restituite aiutano a correggere query e termini della definizione.
+      const seen = found.slice(0, 8).map((f) => `${f.description} [${f.dataType}]`)
+      return (
+        `nessuna voce USDA compatibile (query "${def.query}", termini ${JSON.stringify(def.match)})` +
+        (seen.length ? `; risultati: ${seen.join(' | ')}` : '; nessun risultato')
+      )
+    }
     const n = roundResult({
       id: '',
       name: formatFoodLabel(def.display),

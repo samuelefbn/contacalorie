@@ -1,6 +1,7 @@
 # Genera il dataset degli alimenti generici interrogando USDA FoodData Central (servono
 # rete e chiave, che i server di GitHub hanno), lo committa su main e ripubblica il sito.
 # Avvio manuale: Actions → "Genera alimenti generici (USDA)" → Run workflow.
+# Avviato su un branch diverso da main è una prova: genera e mostra il riepilogo, ma non committa né pubblica.
 name: Genera alimenti generici (USDA)
 
 on:
@@ -19,8 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main
 
       - uses: actions/setup-node@v4
         with:
@@ -39,6 +38,7 @@ jobs:
 
       - name: Committa il dataset su main
         id: commit
+        if: github.ref == 'refs/heads/main'
         run: |
           if git diff --quiet -- src/data/genericFoods.it.json; then
             echo "Nessuna modifica al dataset."

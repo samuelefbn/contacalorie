@@ -133,7 +133,8 @@ I valori del dataset arrivano **solo dall'API USDA**, tramite `scripts/build-gen
 **Modo semplice, da GitHub** (consigliato):
 1. Assicurati di avere il secret `VITE_USDA_API_KEY` (vedi passo 2 in alto).
 2. Vai su **Actions → "Genera alimenti generici (USDA)" → Run workflow → Run workflow**.
-3. In 1-2 minuti il workflow genera il dataset, esegue i test, lo committa su `main` e ripubblica il sito. Nella pagina dell'esecuzione trovi una tabella con, per ogni alimento, la voce USDA scelta e i valori, più l'elenco di quelli non trovati.
+3. In 1-2 minuti il workflow genera il dataset, esegue i test, lo committa su `main` e ripubblica il sito. Nella pagina dell'esecuzione trovi una tabella con, per ogni alimento, la voce USDA scelta e i valori, più l'elenco di quelli non trovati, ciascuno con le prime voci restituite da USDA (utili per correggere query e termini in `scripts/genericFoods.defs.ts`).
+4. Per provare modifiche alle definizioni senza toccare `main`, avvia il workflow scegliendo il tuo branch in **Use workflow from**: genera il dataset e il riepilogo, ma non committa e non ripubblica.
 
 **In locale**:
 ```bash
@@ -141,7 +142,7 @@ VITE_USDA_API_KEY=la-tua-chiave npm run build:foods   # oppure metti la chiave n
 git add src/data/genericFoods.it.json && git commit -m "Aggiorna dataset alimenti generici"
 ```
 
-Finché il dataset è vuoto, gli alimenti generici arrivano solo da USDA live (nomi in inglese) e dai tuoi alimenti.
+Gli alimenti non presenti nel dataset arrivano da USDA live, tradotti in italiano (le voci con termini non tradotti vengono scartate), e dai tuoi alimenti. Alcuni alimenti italiani (prosciutto crudo, orata, mascarpone) non esistono in USDA Foundation/SR Legacy: si trovano tra i prodotti confezionati.
 
 ## Sviluppo in locale
 
