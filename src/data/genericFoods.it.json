@@ -1,11 +1,11 @@
 {
- "generatedAt": "2026-10-08T07:38:11.066Z",
+ "generatedAt": "2026-10-08T08:22:59.317Z",
  "source": "USDA FoodData Central (https://fdc.nal.usda.gov)",
  "dataTypes": [
   "Foundation",
   "SR Legacy"
  ],
- "count": 366,
+ "count": 384,
  "foods": [
   {
    "id": "frutta-mela",
@@ -1071,6 +1071,49 @@
    "source": "USDA",
    "fdcId": 170051,
    "usdaDescription": "Tomatoes, red, ripe, canned, packed in tomato juice",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
+   "id": "verdura-passata-di-pomodoro",
+   "category": "Verdura",
+   "baseName": "Passata di pomodoro",
+   "details": [],
+   "isPrimitive": false,
+   "synonyms": [
+    "passata",
+    "passata di pomodoro",
+    "salsa di pomodoro"
+   ],
+   "state": "in scatola",
+   "kcal100": 38,
+   "protein100": 1.7,
+   "carbs100": 9,
+   "fat100": 0.2,
+   "source": "USDA",
+   "fdcId": 170460,
+   "usdaDescription": "Tomato products, canned, puree, without salt added",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
+   "id": "verdura-concentrato-di-pomodoro",
+   "category": "Verdura",
+   "baseName": "Concentrato di pomodoro",
+   "details": [],
+   "isPrimitive": false,
+   "synonyms": [
+    "concentrato di pomodoro",
+    "triplo concentrato"
+   ],
+   "state": "in scatola",
+   "kcal100": 82,
+   "protein100": 4.3,
+   "carbs100": 18.9,
+   "fat100": 0.5,
+   "source": "USDA",
+   "fdcId": 170459,
+   "usdaDescription": "Tomato products, canned, paste, without salt added (Includes foods for USDA's Food Distribution Program)",
    "dataType": "SR Legacy",
    "portions": []
   },
@@ -2293,6 +2336,31 @@
    "portions": []
   },
   {
+   "id": "verdura-fungo-shiitake-secco",
+   "category": "Verdura",
+   "baseName": "Fungo",
+   "details": [
+    "shiitake",
+    "secco"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "funghi secchi",
+    "shiitake",
+    "funghi shiitake secchi"
+   ],
+   "state": "secco",
+   "kcal100": 296,
+   "protein100": 9.6,
+   "carbs100": 75.4,
+   "fat100": 1,
+   "source": "USDA",
+   "fdcId": 168436,
+   "usdaDescription": "Mushrooms, shiitake, dried",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
    "id": "verdura-zucca-cruda",
    "category": "Verdura",
    "baseName": "Zucca",
@@ -3286,6 +3354,29 @@
    "portions": []
   },
   {
+   "id": "legumi-edamame-cotto",
+   "category": "Legumi",
+   "baseName": "Edamame",
+   "details": [
+    "cotto"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "edamame",
+    "fagioli di soia verdi"
+   ],
+   "state": "cotto",
+   "kcal100": 121,
+   "protein100": 11.9,
+   "carbs100": 8.9,
+   "fat100": 5.2,
+   "source": "USDA",
+   "fdcId": 168411,
+   "usdaDescription": "Edamame, frozen, prepared",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
    "id": "legumi-lupino-lessato",
    "category": "Legumi",
    "baseName": "Lupino",
@@ -3579,6 +3670,37 @@
    ]
   },
   {
+   "id": "cereali-e-derivati-pasta-di-semola-cotta",
+   "category": "Cereali e derivati",
+   "baseName": "Pasta",
+   "details": [
+    "di semola",
+    "cotta"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "pasta di semola",
+    "pasta cotta",
+    "spaghetti cotti",
+    "pasta bollita"
+   ],
+   "state": "cotto",
+   "kcal100": 158,
+   "protein100": 5.8,
+   "carbs100": 30.9,
+   "fat100": 0.9,
+   "source": "USDA",
+   "fdcId": 168928,
+   "usdaDescription": "Pasta, cooked, unenriched, without added salt",
+   "dataType": "SR Legacy",
+   "portions": [
+    {
+     "label": "1 porzione",
+     "grams": 200
+    }
+   ]
+  },
+  {
    "id": "cereali-e-derivati-pasta-integrale-cruda",
    "category": "Cereali e derivati",
    "baseName": "Pasta",
@@ -3682,6 +3804,41 @@
    "portions": []
   },
   {
+   "id": "cereali-e-derivati-pane-bianco",
+   "category": "Cereali e derivati",
+   "baseName": "Pane",
+   "details": [
+    "bianco"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "pane",
+    "pane bianco",
+    "pane comune",
+    "pane in cassetta",
+    "pancarre"
+   ],
+   "state": null,
+   "kcal100": 266,
+   "protein100": 8.9,
+   "carbs100": 49.4,
+   "fat100": 3.3,
+   "source": "USDA",
+   "fdcId": 174924,
+   "usdaDescription": "Bread, white, commercially prepared (includes soft bread crumbs)",
+   "dataType": "SR Legacy",
+   "portions": [
+    {
+     "label": "1 fetta",
+     "grams": 30
+    },
+    {
+     "label": "1 panino",
+     "grams": 60
+    }
+   ]
+  },
+  {
    "id": "cereali-e-derivati-pane-integrale",
    "category": "Cereali e derivati",
    "baseName": "Pane",
@@ -3725,13 +3882,13 @@
     "pane a lievitazione naturale"
    ],
    "state": null,
-   "kcal100": 239,
-   "protein100": 8.3,
-   "carbs100": 49.1,
-   "fat100": 1,
+   "kcal100": 272,
+   "protein100": 10.8,
+   "carbs100": 51.9,
+   "fat100": 2.4,
    "source": "USDA",
-   "fdcId": 174091,
-   "usdaDescription": "Bread, french or vienna, whole wheat",
+   "fdcId": 172675,
+   "usdaDescription": "Bread, french or vienna (includes sourdough)",
    "dataType": "SR Legacy",
    "portions": [
     {
@@ -4346,6 +4503,63 @@
    "portions": []
   },
   {
+   "id": "cereali-e-derivati-galletta-di-riso",
+   "category": "Cereali e derivati",
+   "baseName": "Galletta di riso",
+   "details": [],
+   "isPrimitive": false,
+   "synonyms": [
+    "gallette di riso",
+    "gallette"
+   ],
+   "state": null,
+   "kcal100": 387,
+   "protein100": 8.2,
+   "carbs100": 81.5,
+   "fat100": 2.8,
+   "source": "USDA",
+   "fdcId": 170250,
+   "usdaDescription": "Snacks, rice cakes, brown rice, plain, unsalted",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
+   "id": "carne-pollo-petto-crudo",
+   "category": "Carne",
+   "baseName": "Pollo",
+   "cut": "petto",
+   "details": [
+    "crudo"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "pollo",
+    "petto di pollo",
+    "fesa di pollo",
+    "filetto di pollo",
+    "pollo crudo"
+   ],
+   "state": "crudo",
+   "kcal100": 120,
+   "protein100": 22.5,
+   "carbs100": 0,
+   "fat100": 2.6,
+   "source": "USDA",
+   "fdcId": 171077,
+   "usdaDescription": "Chicken, broiler or fryers, breast, skinless, boneless, meat only, raw",
+   "dataType": "SR Legacy",
+   "portions": [
+    {
+     "label": "1 fetta di petto",
+     "grams": 100
+    },
+    {
+     "label": "1 petto intero",
+     "grams": 200
+    }
+   ]
+  },
+  {
    "id": "carne-pollo-petto-arrosto",
    "category": "Carne",
    "baseName": "Pollo",
@@ -4785,6 +4999,55 @@
    "portions": []
   },
   {
+   "id": "carne-tacchino-coscia-cruda",
+   "category": "Carne",
+   "baseName": "Tacchino",
+   "cut": "coscia",
+   "details": [
+    "cruda"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "tacchino",
+    "coscia di tacchino"
+   ],
+   "state": "crudo",
+   "kcal100": 108,
+   "protein100": 21.3,
+   "carbs100": 0.2,
+   "fat100": 2.5,
+   "source": "USDA",
+   "fdcId": 171090,
+   "usdaDescription": "Turkey, whole, dark meat, meat only, raw",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
+   "id": "carne-tacchino-coscia-arrosto",
+   "category": "Carne",
+   "baseName": "Tacchino",
+   "cut": "coscia",
+   "details": [
+    "arrosto"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "coscia di tacchino",
+    "tacchino",
+    "coscia di tacchino cotta"
+   ],
+   "state": "arrosto",
+   "kcal100": 173,
+   "protein100": 27.7,
+   "carbs100": 0,
+   "fat100": 6,
+   "source": "USDA",
+   "fdcId": 171091,
+   "usdaDescription": "Turkey, whole, dark meat, cooked, roasted",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
    "id": "carne-tacchino-macinato-crudo",
    "category": "Carne",
    "baseName": "Tacchino",
@@ -5038,6 +5301,57 @@
    "source": "USDA",
    "fdcId": 168635,
    "usdaDescription": "Beef, top sirloin, steak, separable lean only, trimmed to 0\" fat, choice, cooked, broiled",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
+   "id": "carne-manzo-filetto-crudo",
+   "category": "Carne",
+   "baseName": "Manzo",
+   "cut": "filetto",
+   "details": [
+    "crudo"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "manzo",
+    "filetto",
+    "filetto di manzo"
+   ],
+   "state": "crudo",
+   "kcal100": 153,
+   "protein100": 22.1,
+   "carbs100": 0,
+   "fat100": 6.5,
+   "source": "USDA",
+   "fdcId": 171812,
+   "usdaDescription": "Beef, tenderloin, steak, separable lean only, trimmed to 1/8\" fat, all grades, raw",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
+   "id": "carne-manzo-filetto-alla-griglia",
+   "category": "Carne",
+   "baseName": "Manzo",
+   "cut": "filetto",
+   "details": [
+    "alla griglia"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "filetto di manzo",
+    "manzo",
+    "filetto cotto",
+    "filetto alla griglia"
+   ],
+   "state": "grigliato",
+   "kcal100": 200,
+   "protein100": 29,
+   "carbs100": 0,
+   "fat100": 8.4,
+   "source": "USDA",
+   "fdcId": 171811,
+   "usdaDescription": "Beef, tenderloin, steak, separable lean only, trimmed to 1/8\" fat, all grades, cooked, broiled",
    "dataType": "SR Legacy",
    "portions": []
   },
@@ -5694,6 +6008,109 @@
    "portions": []
   },
   {
+   "id": "carne-agnello-cosciotto-crudo",
+   "category": "Carne",
+   "baseName": "Agnello",
+   "cut": "cosciotto",
+   "details": [
+    "crudo"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "agnello",
+    "cosciotto di agnello",
+    "abbacchio"
+   ],
+   "state": "crudo",
+   "kcal100": 128,
+   "protein100": 20.6,
+   "carbs100": 0,
+   "fat100": 4.5,
+   "source": "USDA",
+   "fdcId": 174313,
+   "usdaDescription": "Lamb, leg, whole (shank and sirloin), separable lean only, trimmed to 1/4\" fat, choice, raw",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
+   "id": "carne-agnello-cosciotto-arrosto",
+   "category": "Carne",
+   "baseName": "Agnello",
+   "cut": "cosciotto",
+   "details": [
+    "arrosto"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "cosciotto di agnello",
+    "agnello",
+    "agnello arrosto",
+    "abbacchio al forno"
+   ],
+   "state": "arrosto",
+   "kcal100": 191,
+   "protein100": 28.3,
+   "carbs100": 0,
+   "fat100": 7.7,
+   "source": "USDA",
+   "fdcId": 174314,
+   "usdaDescription": "Lamb, leg, whole (shank and sirloin), separable lean only, trimmed to 1/4\" fat, choice, cooked, roasted",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
+   "id": "carne-agnello-costolette-crude",
+   "category": "Carne",
+   "baseName": "Agnello",
+   "cut": "costolette",
+   "details": [
+    "crude"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "agnello",
+    "costolette di agnello",
+    "scottadito",
+    "costolette d agnello"
+   ],
+   "state": "crudo",
+   "kcal100": 310,
+   "protein100": 16.3,
+   "carbs100": 0,
+   "fat100": 26.6,
+   "source": "USDA",
+   "fdcId": 174319,
+   "usdaDescription": "Lamb, loin, separable lean and fat, trimmed to 1/4\" fat, choice, raw",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
+   "id": "carne-agnello-costolette-alla-griglia",
+   "category": "Carne",
+   "baseName": "Agnello",
+   "cut": "costolette",
+   "details": [
+    "alla griglia"
+   ],
+   "isPrimitive": true,
+   "synonyms": [
+    "costolette d agnello",
+    "agnello",
+    "scottadito cotte",
+    "costolette di agnello alla griglia"
+   ],
+   "state": "grigliato",
+   "kcal100": 316,
+   "protein100": 25.2,
+   "carbs100": 0,
+   "fat100": 23.1,
+   "source": "USDA",
+   "fdcId": 172489,
+   "usdaDescription": "Lamb, loin, separable lean and fat, trimmed to 1/4\" fat, choice, cooked, broiled",
+   "dataType": "SR Legacy",
+   "portions": []
+  },
+  {
    "id": "carne-coniglio-crudo",
    "category": "Carne",
    "baseName": "Coniglio",
@@ -6068,6 +6485,34 @@
    "usdaDescription": "Pork, cured, bacon, pre-sliced, cooked, pan-fried",
    "dataType": "SR Legacy",
    "portions": []
+  },
+  {
+   "id": "salumi-wurstel",
+   "category": "Salumi",
+   "baseName": "Würstel",
+   "details": [],
+   "isPrimitive": false,
+   "synonyms": [
+    "wurstel",
+    "würstel",
+    "hot dog",
+    "frankfurter"
+   ],
+   "state": null,
+   "kcal100": 290,
+   "protein100": 10.3,
+   "carbs100": 4.2,
+   "fat100": 25.8,
+   "source": "USDA",
+   "fdcId": 172968,
+   "usdaDescription": "Frankfurter, meat",
+   "dataType": "SR Legacy",
+   "portions": [
+    {
+     "label": "1 würstel",
+     "grams": 50
+    }
+   ]
   },
   {
    "id": "salumi-wurstel-di-pollo",
@@ -9022,6 +9467,37 @@
     {
      "label": "1 quadretto",
      "grams": 5
+    }
+   ]
+  },
+  {
+   "id": "bevande-caffe-espresso",
+   "category": "Bevande",
+   "baseName": "Caffè",
+   "details": [
+    "espresso"
+   ],
+   "isPrimitive": false,
+   "synonyms": [
+    "caffè espresso",
+    "caffe",
+    "espresso",
+    "caffe espresso",
+    "tazzina di caffe"
+   ],
+   "state": null,
+   "kcal100": 9,
+   "protein100": 0.1,
+   "carbs100": 1.7,
+   "fat100": 0.2,
+   "source": "USDA",
+   "fdcId": 171891,
+   "usdaDescription": "Beverages, coffee, brewed, espresso, restaurant-prepared",
+   "dataType": "SR Legacy",
+   "portions": [
+    {
+     "label": "1 tazzina",
+     "grams": 30
     }
    ]
   },
