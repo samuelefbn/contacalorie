@@ -23,6 +23,7 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - run: npm run docs:check
 
   # Regole di sicurezza di Firestore provate sull'emulatore (nessun progetto reale: "demo-contacalorie").
   rules:
