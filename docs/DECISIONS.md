@@ -149,3 +149,13 @@ Lo **stato** è:
   - Fuse.js per la ricerca approssimata;
   - Vitest per i test.
 - **Fonti**: `package.json`, `vite.config.ts`, commit `7def06e`.
+
+## ADR-15 — Stato del tutorial in Firestore, con cache locale solo anti-flash
+- **Stato**: confermata.
+- **Contesto**: il tutorial di benvenuto va mostrato una sola volta per utente, anche cambiando dispositivo, senza comparire per un attimo a chi l'ha già visto e senza mai ripetersi in loop.
+- **Decisione**:
+  - stato in `users/{uid}.tutorial` (`completed`, `completedAt`, `version`, `skipped`), letto con un mapper separato (`toTutorialState`) e scritto solo da `saveTutorialDone` con merge, così `saveProfile` non lo tocca;
+  - cache locale `contacalorie:tutorial:{uid}` letta all'avvio: se dice "già visto" il tutorial non compare; si cancella con il logout (prefisso `contacalorie:`) e al cambio di utente;
+  - si mostra solo se lo stato letto **dal server** dice "non completato" (o versione più vecchia di `TUTORIAL_VERSION`): errore o dato solo locale = non mostrare;
+  - "Salta", × ed Esc valgono come completato con `skipped: true`; "Rivedi il tutorial" non scrive nulla.
+- **Fonti**: `src/lib/tutorial.ts`, `src/hooks/useTutorial.ts`, `src/services/tutorial.ts`, `firestore.rules` (`isValidTutorial`).

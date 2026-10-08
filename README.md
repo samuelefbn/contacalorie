@@ -8,7 +8,7 @@ App web personale per contare le calorie, in italiano. Registri ciò che mangi e
 
 ## Funzionalità
 
-- **Accesso con Google** e **dati privati**: ogni utente vede solo i propri dati, garantito dalle regole di Firestore. Al primo accesso c'è un breve **onboarding**.
+- **Accesso con Google** e **dati privati**: ogni utente vede solo i propri dati, garantito dalle regole di Firestore. Al primo accesso c'è un breve **onboarding**, seguito da un **tutorial di benvenuto** che si può rivedere da Account.
 - **Diario giornaliero** diviso in colazione, pranzo, cena e spuntini, con kcal e macro per voce; si modifica o si elimina (con **Annulla**).
 - **Dashboard** del giorno: anello delle calorie rimanenti o in eccesso e barre di proteine, carboidrati e grassi.
 - **Obiettivo calorico** con la formula di **Mifflin-St Jeor** × fattore di attività (−500 kcal per dimagrire, +300 per aumentare, soglia minima di sicurezza), impostabile anche a mano, con target dei macro.

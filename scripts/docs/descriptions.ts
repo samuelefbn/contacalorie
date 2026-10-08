@@ -53,13 +53,15 @@ export const FILE_EFFECTS: Record<string, string> = {
   'src/features/history/CaloriesChart.tsx': UI,
   'src/features/history/WeightChart.tsx': UI,
   'src/features/auth/ConfigMissing.tsx': UI,
+  'src/features/tutorial/TutorialArtwork.tsx': UI,
+  'src/features/tutorial/steps.ts': 'Nessuno: solo dati.',
 }
 
 export const DESCRIPTIONS: Record<string, Description> = {
   // ------------------------------------------------------------------ App
   'src/App.tsx#App': {
-    s: 'Radice dell\'app (export di default): ErrorBoundary → ThemeProvider → (ConfigMissing se mancano le variabili Firebase) → AuthProvider → ToastProvider → Gate. Gate mostra il caricamento, LoginPage o, per l\'utente autenticato, SyncProvider + AuthenticatedApp (header con SyncIndicator, onboarding, schede, BottomNav).',
-    e: 'AuthenticatedApp crea users/{uid} con createUserDoc quando il server conferma che non esiste; avvia usePendingScanCompletion; legge e scrive l\'hash dell\'URL tramite useHashTab.',
+    s: 'Radice dell\'app (export di default): ErrorBoundary → ThemeProvider → (ConfigMissing se mancano le variabili Firebase) → AuthProvider → ToastProvider → Gate. Gate mostra il caricamento, LoginPage o, per l\'utente autenticato, SyncProvider + AuthenticatedApp (header con SyncIndicator, onboarding, schede, BottomNav, TutorialDialog dopo l\'onboarding).',
+    e: 'AuthenticatedApp crea users/{uid} con createUserDoc quando il server conferma che non esiste; avvia usePendingScanCompletion e useTutorial; legge e scrive l\'hash dell\'URL tramite useHashTab.',
   },
 
   // ------------------------------------------------------------------ components/layout
@@ -106,7 +108,7 @@ export const DESCRIPTIONS: Record<string, Description> = {
   'src/contexts/ToastContext.tsx#useToast': { s: 'Restituisce notify(messaggio, azione?) e reportError(errore).', e: 'Nessuno. Lancia un errore se usato fuori da ToastProvider.' },
 
   // ------------------------------------------------------------------ features/account
-  'src/features/account/AccountSection.tsx#AccountSection': { e: 'Al tocco su "Esci": online attende flushPendingWrites (15 s), offline chiede conferma con window.confirm; poi signOut (logout sicuro: cancella i dati locali e ricarica).' },
+  'src/features/account/AccountSection.tsx#AccountSection': { e: 'Al tocco su "Esci": online attende flushPendingWrites (15 s), offline chiede conferma con window.confirm; poi signOut (logout sicuro: cancella i dati locali e ricarica). "Rivedi il tutorial" chiama onReplayTutorial (nessuna scrittura).' },
   'src/features/account/MyDataSection.tsx#MyDataSection': { e: 'Export: legge tutto con exportAllData (rete o cache) e scarica un JSON e un CSV. Eliminazione: deleteAllUserData (cancella i documenti su Firestore), deleteAuthAccount o reauthenticateAndDelete (popup Google), poi wipeLocalDataAndReload.' },
   'src/features/account/OnboardingPage.tsx#OnboardingPage': { e: 'Tramite ProfileForm salva il profilo con onboarded: true; "Salta per ora" chiama saveProfile con i valori attuali e onboarded: true.' },
 
@@ -147,7 +149,7 @@ export const DESCRIPTIONS: Record<string, Description> = {
   // ------------------------------------------------------------------ features/profile
   'src/features/profile/ExportSection.tsx#ExportSection': { e: 'Legge con fetchEntries e fetchWeights (getDocs) e scarica file CSV.' },
   'src/features/profile/ProfileForm.tsx#ProfileForm': { s: 'Modulo del profilo: sesso, età, altezza, peso, attività, obiettivo; mostra metabolismo basale, fabbisogno e obiettivo consigliato; obiettivo manuale; target dei macro con "Calcola"; "Crea profilo" o "Salva profilo".', e: 'saveProfile (con onboarded: true), non attesa; notifica "Profilo salvato"; chiama onSaved se presente.' },
-  'src/features/profile/ProfilePage.tsx#ProfilePage': { s: 'Pagina Profilo: AccountSection, ProfileForm, tema e installazione dell\'app, ExportSection, MyDataSection, crediti Open Food Facts.', e: 'Cambia il tema (localStorage tramite ThemeProvider); "Installa" avvia il prompt di installazione del browser.' },
+  'src/features/profile/ProfilePage.tsx#ProfilePage': { s: 'Pagina Profilo: AccountSection (con "Rivedi il tutorial" tramite onReplayTutorial), ProfileForm, tema e installazione dell\'app, ExportSection, MyDataSection, crediti Open Food Facts.', e: 'Cambia il tema (localStorage tramite ThemeProvider); "Installa" avvia il prompt di installazione del browser.' },
 
   // ------------------------------------------------------------------ hooks
   'src/hooks/data.ts#useProfile': { s: 'Listener sul documento users/{uid}: profilo (o null), loading, error, fromCache.', e: 'Listener onSnapshot (con metadati) finché il componente è montato.' },
@@ -332,4 +334,23 @@ export const DESCRIPTIONS: Record<string, Description> = {
   'src/types.ts#ActivityLevel': { s: 'Livello di attività: sedentary, light, moderate, active, very_active.' },
   'src/types.ts#Goal': { s: 'Obiettivo: lose, maintain, gain.' },
   'src/types.ts#RecipeIngredient': { s: 'Ingrediente di una ricetta: nome, grammi, valori per 100 g.' },
+  'src/features/tutorial/steps.ts#TutorialStep': { s: 'Passo del tutorial: titolo, 1-3 frasi, illustrazione e scheda della barra in basso a cui rimanda.' },
+  'src/features/tutorial/steps.ts#TUTORIAL_STEPS': { s: 'I 7 passi del tutorial di benvenuto, separati dal componente: benvenuto, profilo, diario, ricerca, scanner, storico, offline e account.' },
+  'src/features/tutorial/TutorialArtwork.tsx#TabIcon': { s: 'Icona di una scheda della barra in basso (le stesse di BottomNav), per indicare nel tutorial il pulsante reale.' },
+  'src/features/tutorial/TutorialDialog.tsx#TutorialDialog': { p: 'onFinish(true) con "Inizia" all\'ultimo passo; onFinish(false) con "Salta tutorial" o Esc. steps facoltativo (predefinito TUTORIAL_STEPS).', e: 'Blocca lo scorrimento della pagina finché è aperto, ascolta la tastiera sulla finestra (Esc, Tab), sposta il focus sul titolo a ogni passo e lo restituisce alla chiusura. Nessuna scrittura.' },
+  'src/hooks/data.ts#useTutorialState': { e: 'Listener onSnapshot (con metadati) sul documento users/{uid} finché il componente è montato.' },
+  'src/hooks/useTutorial.ts#SKIP_HINT': { s: 'Avviso mostrato una volta dopo "Salta tutorial": "Puoi rivederlo da Account".', e: 'Nessuno.' },
+  'src/hooks/useTutorial.ts#TutorialControl': { s: 'Valore di useTutorial: open, mode (first o replay), finish e replay.' },
+  'src/hooks/useTutorial.ts#useTutorial': { p: 'uid dell\'utente; blocked = true finché il profilo è in caricamento, in errore, assente o nell\'onboarding.', e: 'Legge e scrive la cache locale contacalorie:tutorial:{uid} e cancella quelle di altri uid; alla chiusura del primo tutorial chiama saveTutorialDone senza attendere (errori a reportError) e, se saltato, notify con SKIP_HINT. In modalità replay nessuna scrittura.' },
+  'src/lib/tutorial.ts#TUTORIAL_VERSION': { e: 'Nessuno.' },
+  'src/lib/tutorial.ts#TutorialInput': { s: 'Dati per decidere se mostrare il tutorial: profilo pronto, errore, provenienza dalla cache, stato salvato e versione in cache locale.' },
+  'src/lib/tutorial.ts#shouldShowTutorial': { e: PURE },
+  'src/lib/tutorial.ts#parseTutorialState': { e: PURE },
+  'src/lib/tutorial.ts#tutorialCacheKey': { s: 'Chiave della cache locale del tutorial per un utente: contacalorie:tutorial:{uid}.', e: PURE },
+  'src/lib/tutorial.ts#readCachedVersion': { s: 'Versione del tutorial già vista secondo la cache locale (null se assente o archiviazione bloccata).', e: 'Legge da Storage.' },
+  'src/lib/tutorial.ts#writeCachedVersion': { s: 'Ricorda sul dispositivo la versione del tutorial vista.', e: 'Scrive in Storage (errori ignorati).' },
+  'src/lib/tutorial.ts#clearOtherTutorialCaches': { e: 'Rimuove da Storage le chiavi contacalorie:tutorial: di altri uid.' },
+  'src/lib/tutorial.ts#browserStore': { s: 'localStorage del browser, o null se l\'accesso è bloccato.', e: 'Nessuno.' },
+  'src/services/mappers.ts#toTutorialState': { s: 'Documento users/{uid} → stato del tutorial (null se il documento o il campo mancano).' },
+  'src/services/tutorial.ts#saveTutorialDone': { e: 'setDoc con merge di tutorial (completed true, completedAt = serverTimestamp(), version, skipped) e updatedAt = serverTimestamp(); offline resta nella coda di Firestore.' },
 }

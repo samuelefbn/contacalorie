@@ -70,7 +70,7 @@ tests/rules/         test delle regole Firestore (emulatore)
 public/              icone PWA e favicon
 src/
   main.tsx           monta <App/> in StrictMode
-  App.tsx            provider, autenticazione, onboarding, navigazione a schede
+  App.tsx            provider, autenticazione, onboarding, tutorial, navigazione a schede
   types.ts           tipi del modello dati
   index.css          Tailwind v4, variante dark, colori dei macro e dei grafici
   lib/               logica pura (nutrizione, date, formati, CSV, ricerca, chiavi alimenti…)
@@ -81,7 +81,7 @@ src/
   contexts/          Auth, Theme, Toast, Sync
   components/ui/     Button, Card, Sheet, campi, icone, anello e barre, spinner, PendingMark
   components/layout/ BottomNav, ErrorBoundary, SyncIndicator
-  features/          auth, account, diary, picker, foods, history, profile
+  features/          auth, account, diary, picker, foods, history, profile, tutorial
 firestore.rules · firestore.indexes.json · firebase.json · vite.config.ts · vitest.rules.config.ts
 ```
 

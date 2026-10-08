@@ -20,6 +20,7 @@ Ricavati dalla lettura del codice e dalle prove fatte durante lo sviluppo. Nel c
 - **Primo accesso**: richiede la rete. Il pulsante di login è disattivato offline.
 - **Prodotti mai visti** (Open Food Facts) e **ricerca USDA live**: richiedono la rete. Funzionano offline solo le query già fatte (cache del service worker) e quelle del dataset locale.
 - **Codici nuovi scansionati offline**: solo "Salva per dopo".
+- **Tutorial di benvenuto**: compare solo quando il server ha confermato lo stato (`fromCache` falso). Chi finisce l'onboarding e va subito offline lo vede al successivo avvio online. Chiuderlo offline funziona (scrittura in coda + cache locale).
 - **Esportazione** (`getDocs`): offline esporta solo ciò che è nella copia locale. **Eliminazione dell'account**: richiede la rete.
 - **Conflitti**: vince l'ultima scrittura. Caso limite: un alimento non ancora arrivato su questo dispositivo, se usato offline, viene ricreato e al ritorno della rete sovrascrive l'originale (preferito e `useCount` ripartono). Vedi `docs/DATA_MODEL.md`.
 - **Limite del browser**: cancellando i dati del sito, usando la navigazione privata o uscendo dall'account offline, le modifiche non ancora sincronizzate si perdono.

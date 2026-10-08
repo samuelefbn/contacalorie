@@ -6,7 +6,7 @@
 2. [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md): tutto il progetto in una pagina. Da incollare in una nuova chat.
 3. [`ARCHITECTURE.md`](ARCHITECTURE.md): livelli, cartelle, routing, stato, tema, PWA e offline.
 4. [`DATA_MODEL.md`](DATA_MODEL.md): collezioni Firestore, campi, indici, regole di sicurezza, sincronizzazione e conflitti.
-5. [`FLOWS.md`](FLOWS.md): diagrammi di login, logout, onboarding, diario, ricerca, scansione, offline, calcoli, export ed eliminazione dell'account.
+5. [`FLOWS.md`](FLOWS.md): diagrammi di login, logout, onboarding, tutorial di benvenuto, diario, ricerca, scansione, offline, calcoli, export ed eliminazione dell'account.
 6. Poi, secondo il compito:
    - [`SEARCH_PIPELINE.md`](SEARCH_PIPELINE.md): ranking, normalizzazione, dizionari IT→EN e USDA→IT, dataset, come aggiungere voci.
    - [`UI_SCREENS.md`](UI_SCREENS.md): schermate, dati mostrati, azioni, navigazione.

@@ -41,6 +41,7 @@ erDiagram
         number carbsTarget
         number fatTarget
         boolean onboarded
+        map tutorial
         timestamp createdAt
         timestamp updatedAt
     }
@@ -111,10 +112,24 @@ Tipo: `Profile` in `src/types.ts`. Lettura: `toProfile` (`src/services/mappers.t
 | `carbsTarget` | number 0–2000 | no* | grammi di carboidrati | `220` |
 | `fatTarget` | number 0–1000 | no* | grammi di grassi | `60` |
 | `onboarded` | boolean | no | `false` finché il nuovo utente non completa l'onboarding; se manca vale `true` (profili creati prima dell'onboarding) | `true` |
+| `tutorial` | map o assente | no | stato del tutorial di benvenuto (vedi sotto); assente finché l'utente non lo completa o lo salta | |
 | `createdAt` | timestamp | no | orario del server alla creazione (`createUserDoc`) | |
 | `updatedAt` | timestamp | sì in scrittura | deve essere l'orario del server (`serverTimestamp()`) | |
 
 \* Le regole non li richiedono (usano valori predefiniti con `d.get(...)`), ma l'app li scrive sempre tutti (`saveProfile`, `createUserDoc` in `src/services/profile.ts`).
+
+### Campo `tutorial`
+
+Tipo: `TutorialState` in `src/lib/tutorial.ts`. Lettura: `toTutorialState` (`src/services/mappers.ts`), **separata da `toProfile`**: il campo non fa parte di `Profile`, quindi `saveProfile` (merge) non lo tocca mai. Scrittura: solo `saveTutorialDone` (`src/services/tutorial.ts`), con merge.
+
+| Campo | Tipo | Obbligatorio | Descrizione | Esempio |
+|---|---|---|---|---|
+| `completed` | boolean | sì | `true` quando l'utente ha finito o saltato il tutorial | `true` |
+| `completedAt` | timestamp o null | no | orario del server della chiusura | |
+| `version` | int 1–1000 | sì | versione dei contenuti vista (`TUTORIAL_VERSION`, oggi 1) | `1` |
+| `skipped` | boolean | sì | `true` se chiuso con "Salta tutorial", × o Esc | `false` |
+
+Copia locale: `localStorage["contacalorie:tutorial:{uid}"]` = versione vista, solo per evitare che il tutorial compaia per un attimo prima della risposta di Firestore. L'esportazione JSON (`exportAllData`) non include questo campo: è uno stato dell'interfaccia, non un dato dell'utente.
 
 ## `users/{uid}/entries/{entryId}` — voci del diario
 
@@ -210,7 +225,7 @@ In sintesi:
 1. **Isolamento**: `isOwner(uid)` = `request.auth != null && request.auth.uid == uid`. Ogni lettura, scrittura e cancellazione sotto `users/{uid}` lo richiede, quindi un utente non può mai leggere né scrivere i dati di un altro.
 2. **Tutto il resto è vietato**: `match /{document=**} { allow read, write: if false; }`. Non si possono nemmeno elencare i documenti di `users`.
 3. **Validazione in scrittura** (`create`, `update`), una funzione per collezione:
-   - `isValidProfile`: solo i campi previsti (`hasOnly`), tipi e intervalli, `updatedAt == request.time`.
+   - `isValidProfile`: solo i campi previsti (`hasOnly`), tipi e intervalli, `updatedAt == request.time`. Il campo facoltativo `tutorial` è controllato da `isValidTutorial`: mappa con soli `completed`, `completedAt`, `version`, `skipped`; booleani, `version` intero 1–1000, `completedAt` timestamp o null.
    - `isValidEntry`: campi obbligatori, data `YYYY-MM-DD`, pasto valido, nome 1–200, `per100` plausibile (`isPer100`: kcal 0–1000, macro 0–100), `source` tra i valori ammessi.
    - `isValidFood(d, foodId)`: campi ammessi, id al massimo 100 caratteri, codice a barre di 6–14 cifre, `per100` plausibile, tipo/origine/fonte ammessi, `useCount` intero ≥ 0. **Un prodotto con `origin == "scan"` deve avere come id il proprio codice a barre.**
    - `isValidWeight(d, date)`: `date` uguale all'id, `kg` 20–400.
@@ -219,7 +234,7 @@ In sintesi:
 
 Collegamento con il codice: ogni servizio in `src/services/` scrive esattamente i campi che le regole ammettono (per esempio `recordFoodUse` in `src/services/foods.ts` crea il documento con i campi di `NewFoodData` più `lastUsedAt` e `createdAt` come `serverTimestamp()`). Se si aggiunge un campo in un servizio **bisogna aggiungerlo anche alla lista `hasOnly` della regola**, altrimenti la scrittura viene rifiutata ("Permesso negato", messaggio in `errorMessage` di `src/lib/format.ts`).
 
-Le regole vanno **pubblicate a mano** (vedi `docs/DEPLOY_AND_CONFIG.md`) e si provano con l'emulatore: `npm run test:rules` (27 test in `tests/rules/firestore.rules.emu.ts`, eseguiti anche in CI nel job `rules` di `.github/workflows/ci.yml`).
+Le regole vanno **pubblicate a mano** (vedi `docs/DEPLOY_AND_CONFIG.md`) e si provano con l'emulatore: `npm run test:rules` (36 test in `tests/rules/firestore.rules.emu.ts`, eseguiti anche in CI nel job `rules` di `.github/workflows/ci.yml`).
 
 ## Offline e sincronizzazione
 

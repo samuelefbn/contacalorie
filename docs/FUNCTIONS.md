@@ -2,7 +2,7 @@
 
 > **File generato** da `npm run docs:functions` (`scripts/docs/functions.ts`): firme, righe e chiamanti vengono dal compilatore TypeScript; le descrizioni dai commenti TSDoc del codice e da `scripts/docs/descriptions.ts`. Per modificare una descrizione cambia il commento nel codice o `descriptions.ts`, poi rigenera. `npm run docs:check` segnala se il file non è aggiornato.
 
-Totale: **299 export** in `src/` (61 componenti, 18 hook, 134 funzioni, 7 classi, 27 costanti, 52 tipi). I file di test non sono inclusi. "Usato da" elenca i file che importano il simbolo (anche tramite riesportazione o import dinamico).
+Totale: **322 export** in `src/` (64 componenti, 20 hook, 143 funzioni, 7 classi, 30 costanti, 58 tipi). I file di test non sono inclusi. "Usato da" elenca i file che importano il simbolo (anche tramite riesportazione o import dinamico).
 
 ## Dipendenze tra moduli
 
@@ -22,9 +22,9 @@ flowchart LR
     Services["services: Firestore e sessione"]
     App -->|"5"| Components
     App -->|"4"| Contexts
-    App -->|"7"| Features
+    App -->|"8"| Features
     App -->|"1"| Firebase
-    App -->|"3"| Hooks
+    App -->|"4"| Hooks
     App -->|"1"| Lib
     App -->|"2"| Services
     Components -->|"1"| Contexts
@@ -34,7 +34,7 @@ flowchart LR
     Contexts -->|"1"| Hooks
     Contexts -->|"4"| Lib
     Contexts -->|"2"| Services
-    Features -->|"74"| Components
+    Features -->|"76"| Components
     Features -->|"33"| Contexts
     Features -->|"1"| Firebase
     Features -->|"2"| FoodSearch
@@ -43,24 +43,24 @@ flowchart LR
     Features -->|"22"| Services
     FoodSearch -->|"1"| Data
     FoodSearch -->|"3"| Lib
-    Hooks -->|"1"| Contexts
+    Hooks -->|"2"| Contexts
     Hooks -->|"1"| FoodSearch
-    Hooks -->|"1"| Lib
-    Hooks -->|"5"| Services
+    Hooks -->|"2"| Lib
+    Hooks -->|"6"| Services
     Lib -->|"1"| FoodSearch
     Services -->|"3"| Firebase
-    Services -->|"6"| Lib
+    Services -->|"8"| Lib
 ```
 
 ## Indice
 
-- **Servizi (`src/services/`)**: [exportAllData](#src-services-account-ts-exportalldata) · [deleteAllUserData](#src-services-account-ts-deletealluserdata) · [needsRecentLogin](#src-services-account-ts-needsrecentlogin) · [deleteAuthAccount](#src-services-account-ts-deleteauthaccount) · [reauthenticateAndDelete](#src-services-account-ts-reauthenticateanddelete) · [addEntry](#src-services-entries-ts-addentry) · [restoreEntry](#src-services-entries-ts-restoreentry) · [entryToItem](#src-services-entries-ts-entrytoitem) · [updateEntry](#src-services-entries-ts-updateentry) · [deleteEntry](#src-services-entries-ts-deleteentry) · [fetchEntries](#src-services-entries-ts-fetchentries) · [saveFood](#src-services-foods-ts-savefood) · [recordFoodUse](#src-services-foods-ts-recordfooduse) · [setFavorite](#src-services-foods-ts-setfavorite) · [deleteFood](#src-services-foods-ts-deletefood) · [foodToItem](#src-services-foods-ts-foodtoitem) · [findSavedFood](#src-services-foods-ts-findsavedfood) · [toEntry](#src-services-mappers-ts-toentry) · [toFood](#src-services-mappers-ts-tofood) · [toPendingScan](#src-services-mappers-ts-topendingscan) · [toWeight](#src-services-mappers-ts-toweight) · [DEFAULT_PROFILE](#src-services-mappers-ts-default-profile) · [toProfile](#src-services-mappers-ts-toprofile) · [queuePendingScan](#src-services-pendingscans-ts-queuependingscan) · [markPendingNotFound](#src-services-pendingscans-ts-markpendingnotfound) · [removePendingScan](#src-services-pendingscans-ts-removependingscan) · [saveProfile](#src-services-profile-ts-saveprofile) · [createUserDoc](#src-services-profile-ts-createuserdoc) · [userRef](#src-services-refs-ts-userref) · [entriesRef](#src-services-refs-ts-entriesref) · [foodsRef](#src-services-refs-ts-foodsref) · [weightsRef](#src-services-refs-ts-weightsref) · [pendingScansRef](#src-services-refs-ts-pendingscansref) · [isLeaving](#src-services-session-ts-isleaving) · [flushPendingWrites](#src-services-session-ts-flushpendingwrites) · [wipeLocalDataAndReload](#src-services-session-ts-wipelocaldataandreload) · [secureSignOut](#src-services-session-ts-securesignout) · [logWeight](#src-services-weights-ts-logweight) · [deleteWeight](#src-services-weights-ts-deleteweight) · [fetchWeights](#src-services-weights-ts-fetchweights)
-- **Hook (`src/hooks/`)**: [useProfile](#src-hooks-data-ts-useprofile) · [useDayEntries](#src-hooks-data-ts-usedayentries) · [useEntriesRange](#src-hooks-data-ts-useentriesrange) · [useFoods](#src-hooks-data-ts-usefoods) · [useRecentFoods](#src-hooks-data-ts-userecentfoods) · [useWeights](#src-hooks-data-ts-useweights) · [usePendingScans](#src-hooks-data-ts-usependingscans) · [useQueryData](#src-hooks-usefirestore-ts-usequerydata) · [useDocData](#src-hooks-usefirestore-ts-usedocdata) · [TABS](#src-hooks-usehashtab-ts-tabs) · [useHashTab](#src-hooks-usehashtab-ts-usehashtab) · [useInstallPrompt](#src-hooks-useinstallprompt-ts-useinstallprompt) · [useOnlineStatus](#src-hooks-useonlinestatus-ts-useonlinestatus) · [usePendingScanCompletion](#src-hooks-usependingscancompletion-ts-usependingscancompletion)
+- **Servizi (`src/services/`)**: [exportAllData](#src-services-account-ts-exportalldata) · [deleteAllUserData](#src-services-account-ts-deletealluserdata) · [needsRecentLogin](#src-services-account-ts-needsrecentlogin) · [deleteAuthAccount](#src-services-account-ts-deleteauthaccount) · [reauthenticateAndDelete](#src-services-account-ts-reauthenticateanddelete) · [addEntry](#src-services-entries-ts-addentry) · [restoreEntry](#src-services-entries-ts-restoreentry) · [entryToItem](#src-services-entries-ts-entrytoitem) · [updateEntry](#src-services-entries-ts-updateentry) · [deleteEntry](#src-services-entries-ts-deleteentry) · [fetchEntries](#src-services-entries-ts-fetchentries) · [saveFood](#src-services-foods-ts-savefood) · [recordFoodUse](#src-services-foods-ts-recordfooduse) · [setFavorite](#src-services-foods-ts-setfavorite) · [deleteFood](#src-services-foods-ts-deletefood) · [foodToItem](#src-services-foods-ts-foodtoitem) · [findSavedFood](#src-services-foods-ts-findsavedfood) · [toEntry](#src-services-mappers-ts-toentry) · [toFood](#src-services-mappers-ts-tofood) · [toPendingScan](#src-services-mappers-ts-topendingscan) · [toWeight](#src-services-mappers-ts-toweight) · [DEFAULT_PROFILE](#src-services-mappers-ts-default-profile) · [toProfile](#src-services-mappers-ts-toprofile) · [toTutorialState](#src-services-mappers-ts-totutorialstate) · [queuePendingScan](#src-services-pendingscans-ts-queuependingscan) · [markPendingNotFound](#src-services-pendingscans-ts-markpendingnotfound) · [removePendingScan](#src-services-pendingscans-ts-removependingscan) · [saveProfile](#src-services-profile-ts-saveprofile) · [createUserDoc](#src-services-profile-ts-createuserdoc) · [userRef](#src-services-refs-ts-userref) · [entriesRef](#src-services-refs-ts-entriesref) · [foodsRef](#src-services-refs-ts-foodsref) · [weightsRef](#src-services-refs-ts-weightsref) · [pendingScansRef](#src-services-refs-ts-pendingscansref) · [isLeaving](#src-services-session-ts-isleaving) · [flushPendingWrites](#src-services-session-ts-flushpendingwrites) · [wipeLocalDataAndReload](#src-services-session-ts-wipelocaldataandreload) · [secureSignOut](#src-services-session-ts-securesignout) · [saveTutorialDone](#src-services-tutorial-ts-savetutorialdone) · [logWeight](#src-services-weights-ts-logweight) · [deleteWeight](#src-services-weights-ts-deleteweight) · [fetchWeights](#src-services-weights-ts-fetchweights)
+- **Hook (`src/hooks/`)**: [useProfile](#src-hooks-data-ts-useprofile) · [useDayEntries](#src-hooks-data-ts-usedayentries) · [useEntriesRange](#src-hooks-data-ts-useentriesrange) · [useFoods](#src-hooks-data-ts-usefoods) · [useRecentFoods](#src-hooks-data-ts-userecentfoods) · [useWeights](#src-hooks-data-ts-useweights) · [usePendingScans](#src-hooks-data-ts-usependingscans) · [useTutorialState](#src-hooks-data-ts-usetutorialstate) · [useQueryData](#src-hooks-usefirestore-ts-usequerydata) · [useDocData](#src-hooks-usefirestore-ts-usedocdata) · [TABS](#src-hooks-usehashtab-ts-tabs) · [useHashTab](#src-hooks-usehashtab-ts-usehashtab) · [useInstallPrompt](#src-hooks-useinstallprompt-ts-useinstallprompt) · [useOnlineStatus](#src-hooks-useonlinestatus-ts-useonlinestatus) · [usePendingScanCompletion](#src-hooks-usependingscancompletion-ts-usependingscancompletion) · [SKIP_HINT](#src-hooks-usetutorial-ts-skip-hint) · [useTutorial](#src-hooks-usetutorial-ts-usetutorial)
 - **Context (`src/contexts/`)**: [AuthProvider](#src-contexts-authcontext-tsx-authprovider) · [useAuth](#src-contexts-authcontext-tsx-useauth) · [useUid](#src-contexts-authcontext-tsx-useuid) · [SyncProvider](#src-contexts-synccontext-tsx-syncprovider) · [useSync](#src-contexts-synccontext-tsx-usesync) · [ThemeProvider](#src-contexts-themecontext-tsx-themeprovider) · [useTheme](#src-contexts-themecontext-tsx-usetheme) · [ToastProvider](#src-contexts-toastcontext-tsx-toastprovider) · [useToast](#src-contexts-toastcontext-tsx-usetoast)
-- **Utilità e logica (`src/lib/`)**: [toCsv](#src-lib-csv-ts-tocsv) · [downloadCsv](#src-lib-csv-ts-downloadcsv) · [downloadJson](#src-lib-csv-ts-downloadjson) · [toDateKey](#src-lib-dates-ts-todatekey) · [parseDateKey](#src-lib-dates-ts-parsedatekey) · [todayKey](#src-lib-dates-ts-todaykey) · [addDays](#src-lib-dates-ts-adddays) · [isValidDateKey](#src-lib-dates-ts-isvaliddatekey) · [lastNDays](#src-lib-dates-ts-lastndays) · [formatDayLabel](#src-lib-dates-ts-formatdaylabel) · [formatShortDate](#src-lib-dates-ts-formatshortdate) · [missingFirebaseKeys](#src-lib-firebase-ts-missingfirebasekeys) · [isFirebaseConfigured](#src-lib-firebase-ts-isfirebaseconfigured) · [auth](#src-lib-firebase-ts-auth) · [db](#src-lib-firebase-ts-db) · [googleProvider](#src-lib-firebase-ts-googleprovider) · [cleanBarcode](#src-lib-foodlibrary-ts-cleanbarcode) · [foodKey](#src-lib-foodlibrary-ts-foodkey) · [foodTypeOf](#src-lib-foodlibrary-ts-foodtypeof) · [planFoodWrite](#src-lib-foodlibrary-ts-planfoodwrite) · [foodLabel](#src-lib-foodlibrary-ts-foodlabel) · [fmtInt](#src-lib-format-ts-fmtint) · [fmtDec](#src-lib-format-ts-fmtdec) · [fmtKcal](#src-lib-format-ts-fmtkcal) · [fmtGrams](#src-lib-format-ts-fmtgrams) · [errorMessage](#src-lib-format-ts-errormessage) · [parseNum](#src-lib-format-ts-parsenum) · [numToInput](#src-lib-format-ts-numtoinput) · [validGrams](#src-lib-format-ts-validgrams) · [detectInAppBrowser](#src-lib-inappbrowser-ts-detectinappbrowser) · [currentInAppBrowser](#src-lib-inappbrowser-ts-currentinappbrowser) · [classifySignInError](#src-lib-inappbrowser-ts-classifysigninerror) · [APP_KEY_PREFIXES](#src-lib-localdata-ts-app-key-prefixes) · [RUNTIME_CACHES](#src-lib-localdata-ts-runtime-caches) · [clearLocalAppData](#src-lib-localdata-ts-clearlocalappdata) · [browserDataEnv](#src-lib-localdata-ts-browserdataenv) · [usageScore](#src-lib-myfoodssearch-ts-usagescore) · [createMyFoodsSearch](#src-lib-myfoodssearch-ts-createmyfoodssearch) · [MEALS](#src-lib-nutrition-ts-meals) · [mealLabel](#src-lib-nutrition-ts-meallabel) · [ACTIVITY_LEVELS](#src-lib-nutrition-ts-activity-levels) · [GOALS](#src-lib-nutrition-ts-goals) · [ZERO](#src-lib-nutrition-ts-zero) · [round](#src-lib-nutrition-ts-round) · [bmr](#src-lib-nutrition-ts-bmr) · [tdee](#src-lib-nutrition-ts-tdee) · [recommendedKcal](#src-lib-nutrition-ts-recommendedkcal) · [defaultMacros](#src-lib-nutrition-ts-defaultmacros) · [kcalFromMacros](#src-lib-nutrition-ts-kcalfrommacros) · [scaleNutrients](#src-lib-nutrition-ts-scalenutrients) · [sumNutrients](#src-lib-nutrition-ts-sumnutrients) · [per100FromTotals](#src-lib-nutrition-ts-per100fromtotals) · [completePendingScans](#src-lib-pendingscanqueue-ts-completependingscans) · [pendingInSnapshot](#src-lib-syncstate-ts-pendinginsnapshot) · [syncState](#src-lib-syncstate-ts-syncstate) · [syncLabel](#src-lib-syncstate-ts-synclabel) · [normalize](#src-lib-text-ts-normalize) · [matches](#src-lib-text-ts-matches)
+- **Utilità e logica (`src/lib/`)**: [toCsv](#src-lib-csv-ts-tocsv) · [downloadCsv](#src-lib-csv-ts-downloadcsv) · [downloadJson](#src-lib-csv-ts-downloadjson) · [toDateKey](#src-lib-dates-ts-todatekey) · [parseDateKey](#src-lib-dates-ts-parsedatekey) · [todayKey](#src-lib-dates-ts-todaykey) · [addDays](#src-lib-dates-ts-adddays) · [isValidDateKey](#src-lib-dates-ts-isvaliddatekey) · [lastNDays](#src-lib-dates-ts-lastndays) · [formatDayLabel](#src-lib-dates-ts-formatdaylabel) · [formatShortDate](#src-lib-dates-ts-formatshortdate) · [missingFirebaseKeys](#src-lib-firebase-ts-missingfirebasekeys) · [isFirebaseConfigured](#src-lib-firebase-ts-isfirebaseconfigured) · [auth](#src-lib-firebase-ts-auth) · [db](#src-lib-firebase-ts-db) · [googleProvider](#src-lib-firebase-ts-googleprovider) · [cleanBarcode](#src-lib-foodlibrary-ts-cleanbarcode) · [foodKey](#src-lib-foodlibrary-ts-foodkey) · [foodTypeOf](#src-lib-foodlibrary-ts-foodtypeof) · [planFoodWrite](#src-lib-foodlibrary-ts-planfoodwrite) · [foodLabel](#src-lib-foodlibrary-ts-foodlabel) · [fmtInt](#src-lib-format-ts-fmtint) · [fmtDec](#src-lib-format-ts-fmtdec) · [fmtKcal](#src-lib-format-ts-fmtkcal) · [fmtGrams](#src-lib-format-ts-fmtgrams) · [errorMessage](#src-lib-format-ts-errormessage) · [parseNum](#src-lib-format-ts-parsenum) · [numToInput](#src-lib-format-ts-numtoinput) · [validGrams](#src-lib-format-ts-validgrams) · [detectInAppBrowser](#src-lib-inappbrowser-ts-detectinappbrowser) · [currentInAppBrowser](#src-lib-inappbrowser-ts-currentinappbrowser) · [classifySignInError](#src-lib-inappbrowser-ts-classifysigninerror) · [APP_KEY_PREFIXES](#src-lib-localdata-ts-app-key-prefixes) · [RUNTIME_CACHES](#src-lib-localdata-ts-runtime-caches) · [clearLocalAppData](#src-lib-localdata-ts-clearlocalappdata) · [browserDataEnv](#src-lib-localdata-ts-browserdataenv) · [usageScore](#src-lib-myfoodssearch-ts-usagescore) · [createMyFoodsSearch](#src-lib-myfoodssearch-ts-createmyfoodssearch) · [MEALS](#src-lib-nutrition-ts-meals) · [mealLabel](#src-lib-nutrition-ts-meallabel) · [ACTIVITY_LEVELS](#src-lib-nutrition-ts-activity-levels) · [GOALS](#src-lib-nutrition-ts-goals) · [ZERO](#src-lib-nutrition-ts-zero) · [round](#src-lib-nutrition-ts-round) · [bmr](#src-lib-nutrition-ts-bmr) · [tdee](#src-lib-nutrition-ts-tdee) · [recommendedKcal](#src-lib-nutrition-ts-recommendedkcal) · [defaultMacros](#src-lib-nutrition-ts-defaultmacros) · [kcalFromMacros](#src-lib-nutrition-ts-kcalfrommacros) · [scaleNutrients](#src-lib-nutrition-ts-scalenutrients) · [sumNutrients](#src-lib-nutrition-ts-sumnutrients) · [per100FromTotals](#src-lib-nutrition-ts-per100fromtotals) · [completePendingScans](#src-lib-pendingscanqueue-ts-completependingscans) · [pendingInSnapshot](#src-lib-syncstate-ts-pendinginsnapshot) · [syncState](#src-lib-syncstate-ts-syncstate) · [syncLabel](#src-lib-syncstate-ts-synclabel) · [normalize](#src-lib-text-ts-normalize) · [matches](#src-lib-text-ts-matches) · [TUTORIAL_VERSION](#src-lib-tutorial-ts-tutorial-version) · [shouldShowTutorial](#src-lib-tutorial-ts-shouldshowtutorial) · [parseTutorialState](#src-lib-tutorial-ts-parsetutorialstate) · [tutorialCacheKey](#src-lib-tutorial-ts-tutorialcachekey) · [readCachedVersion](#src-lib-tutorial-ts-readcachedversion) · [writeCachedVersion](#src-lib-tutorial-ts-writecachedversion) · [clearOtherTutorialCaches](#src-lib-tutorial-ts-clearothertutorialcaches) · [browserStore](#src-lib-tutorial-ts-browserstore)
 - **Ricerca alimenti (`src/lib/foodSearch/`)**: [cacheKey](#src-lib-foodsearch-cache-ts-cachekey) · [createSearchCache](#src-lib-foodsearch-cache-ts-createsearchcache) · [DISPLAY_CATEGORIES](#src-lib-foodsearch-display-ts-display-categories) · [formatFoodLabel](#src-lib-foodsearch-display-ts-formatfoodlabel) · [stateRank](#src-lib-foodsearch-display-ts-staterank) · [isStateDetail](#src-lib-foodsearch-display-ts-isstatedetail) · [TIER](#src-lib-foodsearch-genericranking-ts-tier) · [matchTier](#src-lib-foodsearch-genericranking-ts-matchtier) · [isExplicitRequest](#src-lib-foodsearch-genericranking-ts-isexplicitrequest) · [dedupeByLabel](#src-lib-foodsearch-genericranking-ts-dedupebylabel) · [rankGenericResults](#src-lib-foodsearch-genericranking-ts-rankgenericresults) · [GENERIC_DATASET](#src-lib-foodsearch-genericsearch-ts-generic-dataset) · [displayOf](#src-lib-foodsearch-genericsearch-ts-displayof) · [genericToResult](#src-lib-foodsearch-genericsearch-ts-generictoresult) · [createGenericSearch](#src-lib-foodsearch-genericsearch-ts-creategenericsearch) · [searchGenericDataset](#src-lib-foodsearch-genericsearch-ts-searchgenericdataset) · [HttpError](#src-lib-foodsearch-http-ts-httperror) · [TimeoutError](#src-lib-foodsearch-http-ts-timeouterror) · [NetworkError](#src-lib-foodsearch-http-ts-networkerror) · [DEFAULT_TIMEOUT_MS](#src-lib-foodsearch-http-ts-default-timeout-ms) · [DEFAULT_RETRIES](#src-lib-foodsearch-http-ts-default-retries) · [DEFAULT_BASE_DELAY_MS](#src-lib-foodsearch-http-ts-default-base-delay-ms) · [isAbortError](#src-lib-foodsearch-http-ts-isaborterror) · [wait](#src-lib-foodsearch-http-ts-wait) · [fetchJson](#src-lib-foodsearch-http-ts-fetchjson) · [PACKAGED_SOURCES](#src-lib-foodsearch-index-ts-packaged-sources) · [SourcesFailedError](#src-lib-foodsearch-index-ts-sourcesfailederror) · [AllSourcesFailedError](#src-lib-foodsearch-index-ts-allsourcesfailederror) · [OfflineError](#src-lib-foodsearch-index-ts-offlineerror) · [searchPackaged](#src-lib-foodsearch-index-ts-searchpackaged) · [searchUsdaLive](#src-lib-foodsearch-index-ts-searchusdalive) · [searchOnline](#src-lib-foodsearch-index-ts-searchonline) · [mergeGeneric](#src-lib-foodsearch-index-ts-mergegeneric) · [allSourcesFailed](#src-lib-foodsearch-index-ts-allsourcesfailed) · [resultToItem](#src-lib-foodsearch-index-ts-resulttoitem) · [offProductToResult](#src-lib-foodsearch-openfoodfacts-ts-offproducttoresult) · [searchSearchalicious](#src-lib-foodsearch-openfoodfacts-ts-searchsearchalicious) · [searchOffLegacy](#src-lib-foodsearch-openfoodfacts-ts-searchofflegacy) · [getProductByBarcode](#src-lib-foodsearch-openfoodfacts-ts-getproductbybarcode) · [queryTokens](#src-lib-foodsearch-querytext-ts-querytokens) · [canonical](#src-lib-foodsearch-querytext-ts-canonical) · [canonicalTokens](#src-lib-foodsearch-querytext-ts-canonicaltokens) · [normalizeQuery](#src-lib-foodsearch-querytext-ts-normalizequery) · [wordMatches](#src-lib-foodsearch-querytext-ts-wordmatches) · [translateToEnglish](#src-lib-foodsearch-translate-ts-translatetoenglish) · [DICTIONARY_SIZE](#src-lib-foodsearch-translate-ts-dictionary-size) · [SOURCE_LABEL](#src-lib-foodsearch-types-ts-source-label) · [USDA_API_KEY](#src-lib-foodsearch-usda-ts-usda-api-key) · [searchUsda](#src-lib-foodsearch-usda-ts-searchusda) · [USDA_SEARCH_URL](#src-lib-foodsearch-usdamap-ts-usda-search-url) · [USDA_DATA_TYPES](#src-lib-foodsearch-usdamap-ts-usda-data-types) · [usdaNutrients](#src-lib-foodsearch-usdamap-ts-usdanutrients) · [usdaFoodToResult](#src-lib-foodsearch-usdamap-ts-usdafoodtoresult) · [mapFoodCategory](#src-lib-foodsearch-usdatoitalian-ts-mapfoodcategory) · [tokenize](#src-lib-foodsearch-usdatoitalian-ts-tokenize) · [inflect](#src-lib-foodsearch-usdatoitalian-ts-inflect) · [untranslatedReport](#src-lib-foodsearch-usdatoitalian-ts-untranslatedreport) · [resetUntranslated](#src-lib-foodsearch-usdatoitalian-ts-resetuntranslated) · [usdaToItalian](#src-lib-foodsearch-usdatoitalian-ts-usdatoitalian) · [toNumber](#src-lib-foodsearch-validate-ts-tonumber) · [servingGrams](#src-lib-foodsearch-validate-ts-servinggrams) · [isPlausible](#src-lib-foodsearch-validate-ts-isplausible) · [roundResult](#src-lib-foodsearch-validate-ts-roundresult)
 - **Componenti di base (`src/components/`)**: [BottomNav](#src-components-layout-bottomnav-tsx-bottomnav) · [ErrorBoundary](#src-components-layout-errorboundary-tsx-errorboundary) · [SyncIndicator](#src-components-layout-syncindicator-tsx-syncindicator) · [Button](#src-components-ui-button-tsx-button) · [Card](#src-components-ui-card-tsx-card) · [SectionTitle](#src-components-ui-card-tsx-sectiontitle) · [ErrorNotice](#src-components-ui-feedback-tsx-errornotice) · [EmptyState](#src-components-ui-feedback-tsx-emptystate) · [TextField](#src-components-ui-fields-tsx-textfield) · [NumberField](#src-components-ui-fields-tsx-numberfield) · [SelectField](#src-components-ui-fields-tsx-selectfield) · [Segmented](#src-components-ui-fields-tsx-segmented) · [Toggle](#src-components-ui-fields-tsx-toggle) · [BookIcon](#src-components-ui-icons-tsx-bookicon) · [AppleIcon](#src-components-ui-icons-tsx-appleicon) · [ChartIcon](#src-components-ui-icons-tsx-charticon) · [UserIcon](#src-components-ui-icons-tsx-usericon) · [ChevronLeft](#src-components-ui-icons-tsx-chevronleft) · [ChevronRight](#src-components-ui-icons-tsx-chevronright) · [PlusIcon](#src-components-ui-icons-tsx-plusicon) · [StarIcon](#src-components-ui-icons-tsx-staricon) · [BarcodeIcon](#src-components-ui-icons-tsx-barcodeicon) · [SearchIcon](#src-components-ui-icons-tsx-searchicon) · [PendingMark](#src-components-ui-pendingmark-tsx-pendingmark) · [ProgressRing](#src-components-ui-progress-tsx-progressring) · [MacroBar](#src-components-ui-progress-tsx-macrobar) · [Sheet](#src-components-ui-sheet-tsx-sheet) · [Spinner](#src-components-ui-spinner-tsx-spinner) · [LoadingBlock](#src-components-ui-spinner-tsx-loadingblock)
-- **Pagine e funzionalità (`src/features/`)**: [AccountSection](#src-features-account-accountsection-tsx-accountsection) · [MyDataSection](#src-features-account-mydatasection-tsx-mydatasection) · [OnboardingPage](#src-features-account-onboardingpage-tsx-onboardingpage) · [ConfigMissing](#src-features-auth-configmissing-tsx-configmissing) · [LoginPage](#src-features-auth-loginpage-tsx-loginpage) · [AddFoodSheet](#src-features-diary-addfoodsheet-tsx-addfoodsheet) · [DayNavigator](#src-features-diary-daynavigator-tsx-daynavigator) · [DaySummary](#src-features-diary-daysummary-tsx-daysummary) · [DiaryPage](#src-features-diary-diarypage-tsx-diarypage) · [EntryEditor](#src-features-diary-entryeditor-tsx-entryeditor) · [MealSection](#src-features-diary-mealsection-tsx-mealsection) · [MealSelect](#src-features-diary-mealselect-tsx-mealselect) · [FoodEditor](#src-features-foods-foodeditor-tsx-foodeditor) · [FoodsPage](#src-features-foods-foodspage-tsx-foodspage) · [RecipeEditor](#src-features-foods-recipeeditor-tsx-recipeeditor) · [CaloriesChart](#src-features-history-calorieschart-tsx-calorieschart) · [axisProps](#src-features-history-charttheme-ts-axisprops) · [tooltipStyle](#src-features-history-charttheme-ts-tooltipstyle) · [HistoryPage](#src-features-history-historypage-tsx-historypage) · [dailyTotals](#src-features-history-stats-ts-dailytotals) · [average](#src-features-history-stats-ts-average) · [weeks](#src-features-history-stats-ts-weeks) · [WeightChart](#src-features-history-weightchart-tsx-weightchart) · [WeightSection](#src-features-history-weightsection-tsx-weightsection) · [BarcodeScanner](#src-features-picker-barcodescanner-tsx-barcodescanner) · [FoodPicker](#src-features-picker-foodpicker-tsx-foodpicker) · [FoodRow](#src-features-picker-foodrow-tsx-foodrow) · [ManualFoodForm](#src-features-picker-manualfoodform-tsx-manualfoodform) · [PortionForm](#src-features-picker-portionform-tsx-portionform) · [SearchTab](#src-features-picker-searchtab-tsx-searchtab) · [ExportSection](#src-features-profile-exportsection-tsx-exportsection) · [ProfileForm](#src-features-profile-profileform-tsx-profileform) · [ProfilePage](#src-features-profile-profilepage-tsx-profilepage)
+- **Pagine e funzionalità (`src/features/`)**: [AccountSection](#src-features-account-accountsection-tsx-accountsection) · [MyDataSection](#src-features-account-mydatasection-tsx-mydatasection) · [OnboardingPage](#src-features-account-onboardingpage-tsx-onboardingpage) · [ConfigMissing](#src-features-auth-configmissing-tsx-configmissing) · [LoginPage](#src-features-auth-loginpage-tsx-loginpage) · [AddFoodSheet](#src-features-diary-addfoodsheet-tsx-addfoodsheet) · [DayNavigator](#src-features-diary-daynavigator-tsx-daynavigator) · [DaySummary](#src-features-diary-daysummary-tsx-daysummary) · [DiaryPage](#src-features-diary-diarypage-tsx-diarypage) · [EntryEditor](#src-features-diary-entryeditor-tsx-entryeditor) · [MealSection](#src-features-diary-mealsection-tsx-mealsection) · [MealSelect](#src-features-diary-mealselect-tsx-mealselect) · [FoodEditor](#src-features-foods-foodeditor-tsx-foodeditor) · [FoodsPage](#src-features-foods-foodspage-tsx-foodspage) · [RecipeEditor](#src-features-foods-recipeeditor-tsx-recipeeditor) · [CaloriesChart](#src-features-history-calorieschart-tsx-calorieschart) · [axisProps](#src-features-history-charttheme-ts-axisprops) · [tooltipStyle](#src-features-history-charttheme-ts-tooltipstyle) · [HistoryPage](#src-features-history-historypage-tsx-historypage) · [dailyTotals](#src-features-history-stats-ts-dailytotals) · [average](#src-features-history-stats-ts-average) · [weeks](#src-features-history-stats-ts-weeks) · [WeightChart](#src-features-history-weightchart-tsx-weightchart) · [WeightSection](#src-features-history-weightsection-tsx-weightsection) · [BarcodeScanner](#src-features-picker-barcodescanner-tsx-barcodescanner) · [FoodPicker](#src-features-picker-foodpicker-tsx-foodpicker) · [FoodRow](#src-features-picker-foodrow-tsx-foodrow) · [ManualFoodForm](#src-features-picker-manualfoodform-tsx-manualfoodform) · [PortionForm](#src-features-picker-portionform-tsx-portionform) · [SearchTab](#src-features-picker-searchtab-tsx-searchtab) · [ExportSection](#src-features-profile-exportsection-tsx-exportsection) · [ProfileForm](#src-features-profile-profileform-tsx-profileform) · [ProfilePage](#src-features-profile-profilepage-tsx-profilepage) · [TUTORIAL_STEPS](#src-features-tutorial-steps-ts-tutorial-steps) · [TabIcon](#src-features-tutorial-tutorialartwork-tsx-tabicon) · [TutorialArtwork](#src-features-tutorial-tutorialartwork-tsx-tutorialartwork) · [TutorialDialog](#src-features-tutorial-tutorialdialog-tsx-tutorialdialog)
 - **App (`src/App.tsx`)**: [App](#src-app-tsx-app)
 - **Tipi**: elencati in fondo a ogni modulo.
 
@@ -312,12 +312,12 @@ Tipi esportati da `src/services/foods.ts`:
 
 ### `src/services/mappers.ts`
 
-Dipendenze interne del modulo: `src/lib/nutrition.ts` (più i tipi di `src/types.ts`).
+Dipendenze interne del modulo: `src/lib/nutrition.ts`, `src/lib/tutorial.ts` (più i tipi di `src/types.ts`).
 
 <a id="src-services-mappers-ts-toentry"></a>
 #### `toEntry` — funzione
 
-`src/services/mappers.ts:19`
+`src/services/mappers.ts:20`
 
 ```ts
 toEntry(d: QueryDocumentSnapshot<DocumentData, DocumentData>): Entry
@@ -330,7 +330,7 @@ toEntry(d: QueryDocumentSnapshot<DocumentData, DocumentData>): Entry
 <a id="src-services-mappers-ts-tofood"></a>
 #### `toFood` — funzione
 
-`src/services/mappers.ts:43`
+`src/services/mappers.ts:44`
 
 ```ts
 toFood(d: DocumentSnapshot<DocumentData, DocumentData>): Food
@@ -343,7 +343,7 @@ toFood(d: DocumentSnapshot<DocumentData, DocumentData>): Food
 <a id="src-services-mappers-ts-topendingscan"></a>
 #### `toPendingScan` — funzione
 
-`src/services/mappers.ts:73`
+`src/services/mappers.ts:74`
 
 ```ts
 toPendingScan(d: QueryDocumentSnapshot<DocumentData, DocumentData>): PendingScan
@@ -356,7 +356,7 @@ toPendingScan(d: QueryDocumentSnapshot<DocumentData, DocumentData>): PendingScan
 <a id="src-services-mappers-ts-toweight"></a>
 #### `toWeight` — funzione
 
-`src/services/mappers.ts:83`
+`src/services/mappers.ts:84`
 
 ```ts
 toWeight(d: QueryDocumentSnapshot<DocumentData, DocumentData>): WeightEntry
@@ -369,7 +369,7 @@ toWeight(d: QueryDocumentSnapshot<DocumentData, DocumentData>): WeightEntry
 <a id="src-services-mappers-ts-default-profile"></a>
 #### `DEFAULT_PROFILE` — costante
 
-`src/services/mappers.ts:88`
+`src/services/mappers.ts:89`
 
 ```ts
 DEFAULT_PROFILE: Profile
@@ -382,7 +382,7 @@ DEFAULT_PROFILE: Profile
 <a id="src-services-mappers-ts-toprofile"></a>
 #### `toProfile` — funzione
 
-`src/services/mappers.ts:104`
+`src/services/mappers.ts:105`
 
 ```ts
 toProfile(d: DocumentSnapshot<DocumentData, DocumentData>): Profile | null
@@ -391,6 +391,19 @@ toProfile(d: DocumentSnapshot<DocumentData, DocumentData>): Profile | null
 - **Scopo**: Documento → Profile (null se non esiste); onboarded vale true se il campo manca.
 - **Effetti collaterali**: Nessuno: funzione pura.
 - **Usato da**: `src/hooks/data.ts`, `src/services/account.ts`
+
+<a id="src-services-mappers-ts-totutorialstate"></a>
+#### `toTutorialState` — funzione
+
+`src/services/mappers.ts:128`
+
+```ts
+toTutorialState(d: DocumentSnapshot<DocumentData, DocumentData>): TutorialState | null
+```
+
+- **Scopo**: Documento users/{uid} → stato del tutorial (null se il documento o il campo mancano).
+- **Effetti collaterali**: Nessuno: funzione pura.
+- **Usato da**: `src/hooks/data.ts`
 
 ### `src/services/pendingScans.ts`
 
@@ -480,7 +493,7 @@ userRef(uid: string): DocumentReference<DocumentData, DocumentData>
 
 - **Scopo**: Riferimento al documento users/{uid}.
 - **Effetti collaterali**: Nessuno: crea solo riferimenti Firestore (nessuna lettura o scrittura).
-- **Usato da**: `src/contexts/SyncContext.tsx`, `src/hooks/data.ts`, `src/services/account.ts`, `src/services/profile.ts`
+- **Usato da**: `src/contexts/SyncContext.tsx`, `src/hooks/data.ts`, `src/services/account.ts`, `src/services/profile.ts`, `src/services/tutorial.ts`
 
 <a id="src-services-refs-ts-entriesref"></a>
 #### `entriesRef` — funzione
@@ -590,6 +603,23 @@ secureSignOut(): Promise<void>
 - **Scopo**: Logout sicuro per dispositivi condivisi: esce da Google/Firebase, termina Firestore, cancella la sua copia locale e le cache dell'app, poi ricarica. Le modifiche non sincronizzate vanno gestite PRIMA (vedi AccountSection): dopo questa chiamata sono perse.
 - **Effetti collaterali**: signOut di Firebase Auth, poi wipeLocalDataAndReload.
 - **Usato da**: `src/contexts/AuthContext.tsx`
+
+### `src/services/tutorial.ts`
+
+Dipendenze interne del modulo: `src/lib/tutorial.ts`, `src/services/refs.ts`.
+
+<a id="src-services-tutorial-ts-savetutorialdone"></a>
+#### `saveTutorialDone` — funzione
+
+`src/services/tutorial.ts:10`
+
+```ts
+saveTutorialDone(uid: string, skipped: boolean, version?: number): Promise<void>
+```
+
+- **Scopo**: Segna il tutorial come completato (o saltato) in users/{uid}.tutorial. Con merge si tocca solo questo campo (più updatedAt): il profilo resta com'è. Offline la scrittura va nella coda di Firestore; il chiamante non la attende.
+- **Effetti collaterali**: setDoc con merge di tutorial (completed true, completedAt = serverTimestamp(), version, skipped) e updatedAt = serverTimestamp(); offline resta nella coda di Firestore.
+- **Usato da**: `src/hooks/useTutorial.ts`
 
 ### `src/services/weights.ts`
 
@@ -732,6 +762,19 @@ usePendingScans(uid: string): Result<PendingScan[]>
 - **Effetti collaterali**: Listener onSnapshot su pendingScans.
 - **Usato da**: `src/features/foods/FoodsPage.tsx`, `src/hooks/usePendingScanCompletion.ts`
 
+<a id="src-hooks-data-ts-usetutorialstate"></a>
+#### `useTutorialState` — hook
+
+`src/hooks/data.ts:87`
+
+```ts
+useTutorialState(uid: string): Result<TutorialState | null> & { fromCache: boolean; }
+```
+
+- **Scopo**: Stato del tutorial di benvenuto (stesso documento del profilo: Firestore condivide il listener).
+- **Effetti collaterali**: Listener onSnapshot (con metadati) sul documento users/{uid} finché il componente è montato.
+- **Usato da**: `src/hooks/useTutorial.ts`
+
 ### `src/hooks/useFirestore.ts`
 
 Dipendenze interne del modulo: nessuna.
@@ -849,6 +892,43 @@ usePendingScanCompletion(uid: string): void
 - **Scopo**: Appena c'è connessione completa i codici a barre "salvati per dopo": recupera i dati da Open Food Facts, salva il prodotto tra i miei alimenti e avvisa con una notifica.
 - **Effetti collaterali**: Quando l'app è online e ci sono codici "pending": chiamate a Open Food Facts, recordFoodUse, removePendingScan o markPendingNotFound, notifiche.
 - **Usato da**: `src/App.tsx`
+
+### `src/hooks/useTutorial.ts`
+
+Dipendenze interne del modulo: `src/contexts/ToastContext.tsx`, `src/hooks/data.ts`, `src/lib/tutorial.ts`, `src/services/tutorial.ts`.
+
+<a id="src-hooks-usetutorial-ts-skip-hint"></a>
+#### `SKIP_HINT` — costante
+
+`src/hooks/useTutorial.ts:14`
+
+```ts
+SKIP_HINT: "Puoi rivederlo da Account"
+```
+
+- **Scopo**: Avviso mostrato una volta dopo "Salta tutorial": "Puoi rivederlo da Account".
+- **Effetti collaterali**: Nessuno.
+- **Usato da**: nessun altro modulo (solo uso interno o nei test)
+
+<a id="src-hooks-usetutorial-ts-usetutorial"></a>
+#### `useTutorial` — hook
+
+`src/hooks/useTutorial.ts:29`
+
+```ts
+useTutorial(uid: string, blocked: boolean): TutorialControl
+```
+
+- **Scopo**: Tutorial di benvenuto: compare da solo al primo accesso, dopo l'onboarding del profilo (`blocked` finché il profilo è in caricamento o da completare), e si riapre a richiesta da Account.
+- **Parametri e valore restituito**: uid dell'utente; blocked = true finché il profilo è in caricamento, in errore, assente o nell'onboarding.
+- **Effetti collaterali**: Legge e scrive la cache locale contacalorie:tutorial:{uid} e cancella quelle di altri uid; alla chiusura del primo tutorial chiama saveTutorialDone senza attendere (errori a reportError) e, se saltato, notify con SKIP_HINT. In modalità replay nessuna scrittura.
+- **Usato da**: `src/App.tsx`
+
+Tipi esportati da `src/hooks/useTutorial.ts`:
+
+| Tipo | Descrizione | Usato da |
+|---|---|---|
+| `TutorialControl` | Valore di useTutorial: open, mode (first o replay), finish e replay. | — |
 
 ## Context (`src/contexts/`)
 
@@ -989,7 +1069,7 @@ useToast(): ToastValue
 
 - **Scopo**: Restituisce notify(messaggio, azione?) e reportError(errore).
 - **Effetti collaterali**: Nessuno. Lancia un errore se usato fuori da ToastProvider.
-- **Usato da**: `src/App.tsx`, `src/features/account/AccountSection.tsx`, `src/features/account/MyDataSection.tsx`, `src/features/account/OnboardingPage.tsx`, `src/features/diary/AddFoodSheet.tsx`, `src/features/diary/EntryEditor.tsx`, `src/features/foods/FoodEditor.tsx`, `src/features/foods/FoodsPage.tsx`, `src/features/foods/RecipeEditor.tsx`, `src/features/history/WeightSection.tsx`, `src/features/picker/FoodPicker.tsx`, `src/features/picker/SearchTab.tsx`, `src/features/profile/ExportSection.tsx`, `src/features/profile/ProfileForm.tsx`, `src/hooks/usePendingScanCompletion.ts`
+- **Usato da**: `src/App.tsx`, `src/features/account/AccountSection.tsx`, `src/features/account/MyDataSection.tsx`, `src/features/account/OnboardingPage.tsx`, `src/features/diary/AddFoodSheet.tsx`, `src/features/diary/EntryEditor.tsx`, `src/features/foods/FoodEditor.tsx`, `src/features/foods/FoodsPage.tsx`, `src/features/foods/RecipeEditor.tsx`, `src/features/history/WeightSection.tsx`, `src/features/picker/FoodPicker.tsx`, `src/features/picker/SearchTab.tsx`, `src/features/profile/ExportSection.tsx`, `src/features/profile/ProfileForm.tsx`, `src/hooks/usePendingScanCompletion.ts`, `src/hooks/useTutorial.ts`
 
 ## Utilità e logica (`src/lib/`)
 
@@ -1242,7 +1322,7 @@ cleanBarcode(code: string | null | undefined): string | null
 `src/lib/foodLibrary.ts:26`
 
 ```ts
-foodKey(item: Pick<FoodItem, "name" | "foodId" | "barcode" | "key" | "brand">): string
+foodKey(item: Pick<FoodItem, "key" | "name" | "foodId" | "barcode" | "brand">): string
 ```
 
 - **Scopo**: Id del documento per un alimento: id esistente, codice a barre, chiave del risultato o nome+marca.
@@ -1838,6 +1918,121 @@ matches(text: string, query: string): boolean
 - **Scopo**: true se il testo contiene la query, ignorando accenti e maiuscole.
 - **Effetti collaterali**: Nessuno: funzione pura.
 - **Usato da**: `src/features/foods/FoodsPage.tsx`, `src/features/picker/SearchTab.tsx`
+
+### `src/lib/tutorial.ts`
+
+Dipendenze interne del modulo: nessuna.
+
+<a id="src-lib-tutorial-ts-tutorial-version"></a>
+#### `TUTORIAL_VERSION` — costante
+
+`src/lib/tutorial.ts:10`
+
+```ts
+TUTORIAL_VERSION: 1
+```
+
+- **Scopo**: Versione corrente dei contenuti: aumentandola, chi ha visto una versione precedente lo rivede.
+- **Effetti collaterali**: Nessuno.
+- **Usato da**: `src/hooks/useTutorial.ts`, `src/services/tutorial.ts`
+
+<a id="src-lib-tutorial-ts-shouldshowtutorial"></a>
+#### `shouldShowTutorial` — funzione
+
+`src/lib/tutorial.ts:38`
+
+```ts
+shouldShowTutorial({ blocked, error, fromCache, state, cachedVersion, version }: TutorialInput): boolean
+```
+
+- **Scopo**: true solo se è certo che l'utente non ha completato la versione corrente: in caso di errore, di dato solo locale o di dubbio il tutorial NON compare (mai in loop, mai un "flash").
+- **Effetti collaterali**: Nessuno: funzione pura.
+- **Usato da**: `src/hooks/useTutorial.ts`
+
+<a id="src-lib-tutorial-ts-parsetutorialstate"></a>
+#### `parseTutorialState` — funzione
+
+`src/lib/tutorial.ts:46`
+
+```ts
+parseTutorialState(v: unknown): TutorialState | null
+```
+
+- **Scopo**: Lettura difensiva del campo dal documento (dati vecchi o malformati valgono come "assente").
+- **Effetti collaterali**: Nessuno: funzione pura.
+- **Usato da**: `src/services/mappers.ts`
+
+<a id="src-lib-tutorial-ts-tutorialcachekey"></a>
+#### `tutorialCacheKey` — funzione
+
+`src/lib/tutorial.ts:63`
+
+```ts
+tutorialCacheKey(uid: string): string
+```
+
+- **Scopo**: Chiave della cache locale del tutorial per un utente: contacalorie:tutorial:{uid}.
+- **Effetti collaterali**: Nessuno: funzione pura.
+- **Usato da**: nessun altro modulo (solo uso interno o nei test)
+
+<a id="src-lib-tutorial-ts-readcachedversion"></a>
+#### `readCachedVersion` — funzione
+
+`src/lib/tutorial.ts:65`
+
+```ts
+readCachedVersion(store: Store | null, uid: string): number | null
+```
+
+- **Scopo**: Versione del tutorial già vista secondo la cache locale (null se assente o archiviazione bloccata).
+- **Effetti collaterali**: Legge da Storage.
+- **Usato da**: `src/hooks/useTutorial.ts`
+
+<a id="src-lib-tutorial-ts-writecachedversion"></a>
+#### `writeCachedVersion` — funzione
+
+`src/lib/tutorial.ts:74`
+
+```ts
+writeCachedVersion(store: Store | null, uid: string, version: number): void
+```
+
+- **Scopo**: Ricorda sul dispositivo la versione del tutorial vista.
+- **Effetti collaterali**: Scrive in Storage (errori ignorati).
+- **Usato da**: `src/hooks/useTutorial.ts`
+
+<a id="src-lib-tutorial-ts-clearothertutorialcaches"></a>
+#### `clearOtherTutorialCaches` — funzione
+
+`src/lib/tutorial.ts:86`
+
+```ts
+clearOtherTutorialCaches(store: Store | null, uid: string): void
+```
+
+- **Scopo**: Cancella le cache del tutorial di altri utenti (cambio di account sullo stesso dispositivo). Il logout le cancella già tutte insieme alle altre chiavi "contacalorie:".
+- **Effetti collaterali**: Rimuove da Storage le chiavi contacalorie:tutorial: di altri uid.
+- **Usato da**: `src/hooks/useTutorial.ts`
+
+<a id="src-lib-tutorial-ts-browserstore"></a>
+#### `browserStore` — funzione
+
+`src/lib/tutorial.ts:100`
+
+```ts
+browserStore(): Store | null
+```
+
+- **Scopo**: localStorage del browser, o null se l'accesso è bloccato.
+- **Effetti collaterali**: Nessuno.
+- **Usato da**: `src/hooks/useTutorial.ts`
+
+Tipi esportati da `src/lib/tutorial.ts`:
+
+| Tipo | Descrizione | Usato da |
+|---|---|---|
+| `TutorialState` | Campo users/{uid}.tutorial come letto da Firestore. | `src/services/mappers.ts` |
+| `TutorialInput` | Dati per decidere se mostrare il tutorial: profilo pronto, errore, provenienza dalla cache, stato salvato e versione in cache locale. | — |
 
 ## Ricerca alimenti (`src/lib/foodSearch/`)
 
@@ -2867,7 +3062,7 @@ Button({ variant, size, loading, className, children, disabled, ...rest }: Props
 
 - **Scopo**: Pulsante con varianti (primary, secondary, ghost, danger), dimensioni e stato loading (spinner, disattivato).
 - **Effetti collaterali**: Solo interfaccia: nessuna scrittura su Firestore né chiamata di rete.
-- **Usato da**: `src/features/account/AccountSection.tsx`, `src/features/account/MyDataSection.tsx`, `src/features/auth/LoginPage.tsx`, `src/features/diary/AddFoodSheet.tsx`, `src/features/diary/DiaryPage.tsx`, `src/features/diary/EntryEditor.tsx`, `src/features/foods/FoodEditor.tsx`, `src/features/foods/FoodsPage.tsx`, `src/features/foods/RecipeEditor.tsx`, `src/features/history/WeightSection.tsx`, `src/features/picker/BarcodeScanner.tsx`, `src/features/picker/ManualFoodForm.tsx`, `src/features/picker/SearchTab.tsx`, `src/features/profile/ExportSection.tsx`, `src/features/profile/ProfileForm.tsx`, `src/features/profile/ProfilePage.tsx`
+- **Usato da**: `src/features/account/AccountSection.tsx`, `src/features/account/MyDataSection.tsx`, `src/features/auth/LoginPage.tsx`, `src/features/diary/AddFoodSheet.tsx`, `src/features/diary/DiaryPage.tsx`, `src/features/diary/EntryEditor.tsx`, `src/features/foods/FoodEditor.tsx`, `src/features/foods/FoodsPage.tsx`, `src/features/foods/RecipeEditor.tsx`, `src/features/history/WeightSection.tsx`, `src/features/picker/BarcodeScanner.tsx`, `src/features/picker/ManualFoodForm.tsx`, `src/features/picker/SearchTab.tsx`, `src/features/profile/ExportSection.tsx`, `src/features/profile/ProfileForm.tsx`, `src/features/profile/ProfilePage.tsx`, `src/features/tutorial/TutorialDialog.tsx`
 
 ### `src/components/ui/Card.tsx`
 
@@ -3013,7 +3208,7 @@ BookIcon(p: P): Element
 
 - **Scopo**: Icona SVG del libro (scheda Diario).
 - **Effetti collaterali**: Solo interfaccia: nessuna scrittura su Firestore né chiamata di rete.
-- **Usato da**: `src/components/layout/BottomNav.tsx`
+- **Usato da**: `src/components/layout/BottomNav.tsx`, `src/features/tutorial/TutorialArtwork.tsx`
 
 <a id="src-components-ui-icons-tsx-appleicon"></a>
 #### `AppleIcon` — componente
@@ -3026,7 +3221,7 @@ AppleIcon(p: P): Element
 
 - **Scopo**: Icona SVG della mela (scheda Alimenti).
 - **Effetti collaterali**: Solo interfaccia: nessuna scrittura su Firestore né chiamata di rete.
-- **Usato da**: `src/components/layout/BottomNav.tsx`
+- **Usato da**: `src/components/layout/BottomNav.tsx`, `src/features/tutorial/TutorialArtwork.tsx`
 
 <a id="src-components-ui-icons-tsx-charticon"></a>
 #### `ChartIcon` — componente
@@ -3039,7 +3234,7 @@ ChartIcon(p: P): Element
 
 - **Scopo**: Icona SVG del grafico (scheda Storico).
 - **Effetti collaterali**: Solo interfaccia: nessuna scrittura su Firestore né chiamata di rete.
-- **Usato da**: `src/components/layout/BottomNav.tsx`
+- **Usato da**: `src/components/layout/BottomNav.tsx`, `src/features/tutorial/TutorialArtwork.tsx`
 
 <a id="src-components-ui-icons-tsx-usericon"></a>
 #### `UserIcon` — componente
@@ -3052,7 +3247,7 @@ UserIcon(p: P): Element
 
 - **Scopo**: Icona SVG dell'utente (scheda Profilo).
 - **Effetti collaterali**: Solo interfaccia: nessuna scrittura su Firestore né chiamata di rete.
-- **Usato da**: `src/components/layout/BottomNav.tsx`
+- **Usato da**: `src/components/layout/BottomNav.tsx`, `src/features/tutorial/TutorialArtwork.tsx`
 
 <a id="src-components-ui-icons-tsx-chevronleft"></a>
 #### `ChevronLeft` — componente
@@ -3117,7 +3312,7 @@ BarcodeIcon(p: P): Element
 
 - **Scopo**: Icona del codice a barre (apre lo scanner).
 - **Effetti collaterali**: Solo interfaccia: nessuna scrittura su Firestore né chiamata di rete.
-- **Usato da**: `src/features/picker/SearchTab.tsx`
+- **Usato da**: `src/features/picker/SearchTab.tsx`, `src/features/tutorial/TutorialArtwork.tsx`
 
 <a id="src-components-ui-icons-tsx-searchicon"></a>
 #### `SearchIcon` — componente
@@ -3130,7 +3325,7 @@ SearchIcon(p: P): Element
 
 - **Scopo**: Lente della ricerca.
 - **Effetti collaterali**: Solo interfaccia: nessuna scrittura su Firestore né chiamata di rete.
-- **Usato da**: `src/features/picker/SearchTab.tsx`
+- **Usato da**: `src/features/picker/SearchTab.tsx`, `src/features/tutorial/TutorialArtwork.tsx`
 
 ### `src/components/ui/PendingMark.tsx`
 
@@ -3238,11 +3433,11 @@ Dipendenze interne del modulo: `src/components/ui/Button.tsx`, `src/components/u
 `src/features/account/AccountSection.tsx:15`
 
 ```ts
-AccountSection(): Element | null
+AccountSection({ onReplayTutorial }: { onReplayTutorial: () => void; }): Element | null
 ```
 
 - **Scopo**: Account Google: foto, nome, email, ultimo accesso e logout sicuro per dispositivi condivisi.
-- **Effetti collaterali**: Al tocco su "Esci": online attende flushPendingWrites (15 s), offline chiede conferma con window.confirm; poi signOut (logout sicuro: cancella i dati locali e ricarica).
+- **Effetti collaterali**: Al tocco su "Esci": online attende flushPendingWrites (15 s), offline chiede conferma con window.confirm; poi signOut (logout sicuro: cancella i dati locali e ricarica). "Rivedi il tutorial" chiama onReplayTutorial (nessuna scrittura).
 - **Usato da**: `src/features/profile/ProfilePage.tsx`
 
 ### `src/features/account/MyDataSection.tsx`
@@ -3788,30 +3983,103 @@ Dipendenze interne del modulo: `src/components/ui/Button.tsx`, `src/components/u
 `src/features/profile/ProfilePage.tsx:14`
 
 ```ts
-ProfilePage({ profile }: { profile: Profile | null; }): Element
+ProfilePage({ profile, onReplayTutorial }: { profile: Profile | null; onReplayTutorial: () => void; }): Element
 ```
 
-- **Scopo**: Pagina Profilo: AccountSection, ProfileForm, tema e installazione dell'app, ExportSection, MyDataSection, crediti Open Food Facts.
+- **Scopo**: Pagina Profilo: AccountSection (con "Rivedi il tutorial" tramite onReplayTutorial), ProfileForm, tema e installazione dell'app, ExportSection, MyDataSection, crediti Open Food Facts.
 - **Effetti collaterali**: Cambia il tema (localStorage tramite ThemeProvider); "Installa" avvia il prompt di installazione del browser.
+- **Usato da**: `src/App.tsx`
+
+### `src/features/tutorial/steps.ts`
+
+Dipendenze interne del modulo: nessuna.
+
+<a id="src-features-tutorial-steps-ts-tutorial-steps"></a>
+#### `TUTORIAL_STEPS` — costante
+
+`src/features/tutorial/steps.ts:21`
+
+```ts
+TUTORIAL_STEPS: TutorialStep[]
+```
+
+- **Scopo**: I 7 passi del tutorial di benvenuto, separati dal componente: benvenuto, profilo, diario, ricerca, scanner, storico, offline e account.
+- **Effetti collaterali**: Nessuno: solo dati.
+- **Usato da**: `src/features/tutorial/TutorialDialog.tsx`
+
+Tipi esportati da `src/features/tutorial/steps.ts`:
+
+| Tipo | Descrizione | Usato da |
+|---|---|---|
+| `TutorialArt` | Contenuti del tutorial di benvenuto, separati dal componente. Descrivono solo funzioni presenti nell'app: se cambia un'etichetta dell'interfaccia, va aggiornata anche qui. Cambiando i contenuti in modo sostanziale si può aumentare TUTORIAL_VERSION (src/lib/tutorial.ts) per mostrarli di nuovo. | `src/features/tutorial/TutorialArtwork.tsx` |
+| `TutorialTab` | Scheda della barra in basso a cui il passo rimanda (si mostra l'icona, non la posizione). | `src/features/tutorial/TutorialArtwork.tsx` |
+| `TutorialStep` | Passo del tutorial: titolo, 1-3 frasi, illustrazione e scheda della barra in basso a cui rimanda. | `src/features/tutorial/TutorialDialog.tsx` |
+
+### `src/features/tutorial/TutorialArtwork.tsx`
+
+Dipendenze interne del modulo: `src/components/ui/Icons.tsx`, `src/features/tutorial/steps.ts`.
+
+<a id="src-features-tutorial-tutorialartwork-tsx-tabicon"></a>
+#### `TabIcon` — componente
+
+`src/features/tutorial/TutorialArtwork.tsx:16`
+
+```ts
+TabIcon({ tab, ...p }: P & { tab: TutorialTab; }): Element
+```
+
+- **Scopo**: Icona di una scheda della barra in basso (le stesse di BottomNav), per indicare nel tutorial il pulsante reale.
+- **Effetti collaterali**: Solo interfaccia: nessuna scrittura su Firestore né chiamata di rete.
+- **Usato da**: `src/features/tutorial/TutorialDialog.tsx`
+
+<a id="src-features-tutorial-tutorialartwork-tsx-tutorialartwork"></a>
+#### `TutorialArtwork` — componente
+
+`src/features/tutorial/TutorialArtwork.tsx:54`
+
+```ts
+TutorialArtwork({ art, className }: { art: TutorialArt; className?: string | undefined; }): Element
+```
+
+- **Scopo**: Illustrazione del passo: icona su un cerchio nei colori dell'app (chiaro e scuro).
+- **Effetti collaterali**: Solo interfaccia: nessuna scrittura su Firestore né chiamata di rete.
+- **Usato da**: `src/features/tutorial/TutorialDialog.tsx`
+
+### `src/features/tutorial/TutorialDialog.tsx`
+
+Dipendenze interne del modulo: `src/components/ui/Button.tsx`, `src/features/tutorial/TutorialArtwork.tsx`, `src/features/tutorial/steps.ts`.
+
+<a id="src-features-tutorial-tutorialdialog-tsx-tutorialdialog"></a>
+#### `TutorialDialog` — componente
+
+`src/features/tutorial/TutorialDialog.tsx:16`
+
+```ts
+TutorialDialog({ onFinish, steps }: Props): ReactPortal
+```
+
+- **Scopo**: Tutorial di benvenuto a passi: "bottom sheet" su mobile, finestra centrata su schermi larghi.
+- **Parametri e valore restituito**: onFinish(true) con "Inizia" all'ultimo passo; onFinish(false) con "Salta tutorial" o Esc. steps facoltativo (predefinito TUTORIAL_STEPS).
+- **Effetti collaterali**: Blocca lo scorrimento della pagina finché è aperto, ascolta la tastiera sulla finestra (Esc, Tab), sposta il focus sul titolo a ogni passo e lo restituisce alla chiusura. Nessuna scrittura.
 - **Usato da**: `src/App.tsx`
 
 ## App (`src/App.tsx`)
 
 ### `src/App.tsx`
 
-Dipendenze interne del modulo: `src/components/layout/BottomNav.tsx`, `src/components/layout/ErrorBoundary.tsx`, `src/components/layout/SyncIndicator.tsx`, `src/components/ui/Feedback.tsx`, `src/components/ui/Spinner.tsx`, `src/contexts/AuthContext.tsx`, `src/contexts/SyncContext.tsx`, `src/contexts/ThemeContext.tsx`, `src/contexts/ToastContext.tsx`, `src/features/account/OnboardingPage.tsx`, `src/features/auth/ConfigMissing.tsx`, `src/features/auth/LoginPage.tsx`, `src/features/diary/DiaryPage.tsx`, `src/features/foods/FoodsPage.tsx`, `src/features/history/HistoryPage.tsx`, `src/features/profile/ProfilePage.tsx`, `src/hooks/data.ts`, `src/hooks/useHashTab.ts`, `src/hooks/usePendingScanCompletion.ts`, `src/lib/dates.ts`, `src/lib/firebase.ts`, `src/services/mappers.ts`, `src/services/profile.ts`.
+Dipendenze interne del modulo: `src/components/layout/BottomNav.tsx`, `src/components/layout/ErrorBoundary.tsx`, `src/components/layout/SyncIndicator.tsx`, `src/components/ui/Feedback.tsx`, `src/components/ui/Spinner.tsx`, `src/contexts/AuthContext.tsx`, `src/contexts/SyncContext.tsx`, `src/contexts/ThemeContext.tsx`, `src/contexts/ToastContext.tsx`, `src/features/account/OnboardingPage.tsx`, `src/features/auth/ConfigMissing.tsx`, `src/features/auth/LoginPage.tsx`, `src/features/diary/DiaryPage.tsx`, `src/features/foods/FoodsPage.tsx`, `src/features/history/HistoryPage.tsx`, `src/features/profile/ProfilePage.tsx`, `src/features/tutorial/TutorialDialog.tsx`, `src/hooks/data.ts`, `src/hooks/useHashTab.ts`, `src/hooks/usePendingScanCompletion.ts`, `src/hooks/useTutorial.ts`, `src/lib/dates.ts`, `src/lib/firebase.ts`, `src/services/mappers.ts`, `src/services/profile.ts`.
 
 <a id="src-app-tsx-app"></a>
 #### `App` — componente (export di default)
 
-`src/App.tsx:108`
+`src/App.tsx:113`
 
 ```ts
 App(): Element
 ```
 
-- **Scopo**: Radice dell'app (export di default): ErrorBoundary → ThemeProvider → (ConfigMissing se mancano le variabili Firebase) → AuthProvider → ToastProvider → Gate. Gate mostra il caricamento, LoginPage o, per l'utente autenticato, SyncProvider + AuthenticatedApp (header con SyncIndicator, onboarding, schede, BottomNav).
-- **Effetti collaterali**: AuthenticatedApp crea users/{uid} con createUserDoc quando il server conferma che non esiste; avvia usePendingScanCompletion; legge e scrive l'hash dell'URL tramite useHashTab.
+- **Scopo**: Radice dell'app (export di default): ErrorBoundary → ThemeProvider → (ConfigMissing se mancano le variabili Firebase) → AuthProvider → ToastProvider → Gate. Gate mostra il caricamento, LoginPage o, per l'utente autenticato, SyncProvider + AuthenticatedApp (header con SyncIndicator, onboarding, schede, BottomNav, TutorialDialog dopo l'onboarding).
+- **Effetti collaterali**: AuthenticatedApp crea users/{uid} con createUserDoc quando il server conferma che non esiste; avvia usePendingScanCompletion e useTutorial; legge e scrive l'hash dell'URL tramite useHashTab.
 - **Usato da**: `src/main.tsx`
 
 ## Tipi del modello dati (`src/types.ts`)

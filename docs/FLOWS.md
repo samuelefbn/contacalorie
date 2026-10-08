@@ -5,6 +5,7 @@ Ogni flusso indica i file coinvolti. I nomi tra parentesi sono funzioni o compon
 - [Login Google](#login-google)
 - [Logout sicuro e pulizia delle cache](#logout-sicuro-e-pulizia-delle-cache)
 - [Primo accesso e onboarding](#primo-accesso-e-onboarding)
+- [Tutorial di benvenuto](#tutorial-di-benvenuto)
 - [Aggiunta di un alimento al diario](#aggiunta-di-un-alimento-al-diario)
 - [Ricerca alimenti](#ricerca-alimenti)
 - [Scansione del codice a barre](#scansione-del-codice-a-barre)
@@ -121,6 +122,36 @@ flowchart TD
 
 - `createUserDoc` parte **solo** se il server conferma che il documento non esiste (`fromCache === false`), per non sovrascrivere un profilo esistente ma non ancora in cache.
 - I profili creati prima dell'onboarding non hanno il campo `onboarded`: `toProfile` lo considera `true`.
+- Finito l'onboarding parte il [tutorial di benvenuto](#tutorial-di-benvenuto): le due schermate non si sovrappongono.
+
+## Tutorial di benvenuto
+
+File: `src/App.tsx`, `src/hooks/useTutorial.ts`, `src/lib/tutorial.ts`, `src/services/tutorial.ts`, `src/hooks/data.ts` (`useTutorialState`), `src/features/tutorial/TutorialDialog.tsx`, `src/features/tutorial/steps.ts`, `src/features/account/AccountSection.tsx`.
+
+```mermaid
+flowchart TD
+    A["AuthenticatedApp: useTutorial con blocked = profilo in caricamento, in errore, assente o onboarding"] --> B{"blocked?"}
+    B -- sì --> H["Nessun tutorial"]
+    B -- no --> C{"Cache locale contacalorie:tutorial:uid >= versione?"}
+    C -- sì --> H
+    C -- no --> D{"Errore di lettura di users/uid?"}
+    D -- sì --> H
+    D -- no --> E{"tutorial.completed e version >= TUTORIAL_VERSION?"}
+    E -- sì --> H
+    E -- no --> F{"Dato letto dal server, fromCache falso?"}
+    F -- no --> H
+    F -- sì --> T["TutorialDialog: 7 passi"]
+    T -- "Inizia" --> S1["cache locale + saveTutorialDone con skipped false"]
+    T -- "Salta tutorial, × o Esc" --> S2["cache locale + saveTutorialDone con skipped true + avviso: Puoi rivederlo da Account"]
+    R["Account: Rivedi il tutorial"] --> T2["TutorialDialog in modalità replay: alla chiusura nessuna scrittura"]
+```
+
+- `shouldShowTutorial` (`src/lib/tutorial.ts`) mostra il tutorial **solo** se è certo che l'utente non ha completato la versione corrente: errore di lettura, dato dalla sola copia locale o profilo da completare → niente tutorial (mai in loop, mai sopra l'onboarding).
+- **Nessun flash**: la cache locale (`contacalorie:tutorial:{uid}`, con l'uid nella chiave) viene letta subito all'avvio; se dice "già visto" il tutorial non compare nemmeno prima della risposta di Firestore. Quando Firestore dice "completato" (es. su un altro dispositivo), la cache viene aggiornata.
+- **Offline**: `saveTutorialDone` scrive `users/{uid}.tutorial` con `setDoc(..., { merge: true })` senza attendere (`.catch(reportError)`); la scrittura resta nella coda di Firestore. Il tutorial si chiude subito grazie alla cache locale.
+- **Cambio utente e logout**: all'avvio `clearOtherTutorialCaches` cancella le cache del tutorial di altri uid; il logout le cancella comunque con tutte le chiavi `contacalorie:` (`clearLocalAppData`).
+- **Versioni**: aumentando `TUTORIAL_VERSION` (`src/lib/tutorial.ts`) chi ha completato una versione precedente rivede il tutorial.
+- I profili esistenti prima di questa funzione non hanno il campo `tutorial`: vedono il tutorial una volta, al primo avvio con il server raggiungibile.
 
 ## Aggiunta di un alimento al diario
 
