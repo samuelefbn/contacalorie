@@ -104,11 +104,19 @@ Open Food Facts è un database di **prodotti confezionati**: non copre bene gli 
 **1. Alimenti generici** (in alto, fonte primaria)
 1. **I tuoi alimenti e quelli già usati** (fino a 100 distinti dalle voci recenti): istantanei, anche offline.
 2. **Dataset generico incluso nell'app** (`src/data/genericFoods.it.json`): circa 390 alimenti della cucina italiana con nomi e sinonimi in italiano, varianti crudo/cotto per carni e pesci, valori per 100 g presi da USDA FoodData Central. Funziona offline e con le API giù. Ricerca tollerante: senza accenti, singolare/plurale (*mele* → *mela*, *zucchine* → *zucchina*), senza preposizioni, con priorità *esatto > inizia con > contiene > approssimato* (errori di battitura, con Fuse.js).
-3. **USDA FoodData Central live** (`api.nal.usda.gov/fdc/v1/foods/search`, dataset *Foundation* e *SR Legacy*, 15 risultati) per ciò che il dataset non copre: la query viene tradotta con un dizionario italiano → inglese (*mela* → *apple*, *salsiccia* → *pork sausage*); i nomi di questi risultati restano in inglese.
+3. **USDA FoodData Central live** (`api.nal.usda.gov/fdc/v1/foods/search`, dataset *Foundation* e *SR Legacy*, 15 risultati) per ciò che il dataset non copre: la query viene tradotta con un dizionario italiano → inglese (*mela* → *apple*, *salsiccia* → *pork sausage*) e le descrizioni USDA vengono riconvertite in italiano (vedi sotto).
 
 **2. Prodotti confezionati** (sotto): Open Food Facts, prima **Search-a-licious** (`search.openfoodfacts.org`) e, se fallisce o non trova nulla, la **ricerca classica** (`it.openfoodfacts.org/cgi/search.pl`, spesso sovraccarica: risponde 503 senza intestazione CORS, quindi qui si ritentano anche gli errori di rete).
 
-Ogni risultato ha un'etichetta con la fonte (*USDA*, *Open Food Facts*, *Mio*, *Ricetta*). Per gli alimenti generici ci sono **porzioni rapide indicative** (es. *1 mela media ≈ 180 g*, *1 uovo medio ≈ 50 g*), sempre modificabili in grammi.
+**Nomi degli alimenti generici** — sempre in italiano, nel formato `Categoria - Alimento, taglio (dettagli)`:
+`Frutta - Mela`, `Frutta - Mela (Fuji, con buccia, cruda)`, `Carne - Pollo, petto (crudo)`, `Carne - Maiale, salsiccia (cotta)`, `Verdura - Zucchina (cruda)`.
+Le categorie sono un elenco chiuso (Frutta, Verdura, Legumi, Cereali e derivati, Carne, Salumi, Pesce, Uova, Latticini, Grassi e oli, Frutta secca, Dolci, Bevande, Altro). Categoria, nome base, taglio e dettagli sono salvati come campi separati (`GenericFoodDisplay`) e composti con `formatFoodLabel()`; nel diario e nei preferiti viene salvato il nome italiano.
+
+**Traduzione delle descrizioni USDA** (`src/lib/foodSearch/usdaToItalian.ts`): la descrizione (es. *"Apples, raw, fuji, with skin"*) viene divisa in token e ogni token è tradotto con dizionari di alimenti base, tagli, stati di cottura, varietà e altre informazioni, accordando gli aggettivi (*mela cruda*, *petto crudo*). **Se un token non è riconosciuto la voce viene scartata**, mai mostrata in inglese: in sviluppo ogni token mancante è registrato in console, e lo script di generazione ne elenca il riepilogo, così si possono ampliare i dizionari.
+
+**Ordine dei risultati**: prima le voci il cui nome base coincide con la ricerca (per *mela*: `Frutta - Mela`, poi varietà e informazioni in ordine alfabetico, poi le cotture, crudo prima di cotto), poi gli altri alimenti semplici che contengono la parola. I **prodotti trasformati** (dolci e prodotti da forno, succhi, creme, marmellate, snack, salumi, piatti pronti; riconosciuti dalla categoria USDA e dal nome) compaiono solo se cercati esplicitamente (*succo di mela*, *strudel*, *torta di mele*) o aprendo **"Mostra anche prodotti trasformati"**. Gli alimenti per l'infanzia sono esclusi. Se due voci producono lo stesso nome italiano ne resta una sola (prima il dataset, poi USDA *Foundation*).
+
+Le righe mostrano il nome in grassetto e sotto kcal, proteine, carboidrati e grassi per 100 g (per i confezionati la marca in secondo piano); non c'è l'indicazione della fonte. Per gli alimenti generici ci sono **porzioni rapide indicative** (es. *1 mela media ≈ 180 g*, *1 uovo medio ≈ 50 g*), sempre modificabili in grammi.
 
 Regole comuni:
 - **Timeout di 8 secondi** per richiesta e **fino a 2 retry** con attesa crescente (0,5 s, 1 s) solo su 5xx, 429 e timeout.
@@ -120,7 +128,7 @@ Regole comuni:
 
 ### Generare (o aggiornare) il dataset degli alimenti generici
 
-I valori del dataset arrivano **solo dall'API USDA**, tramite `scripts/build-generic-foods.ts`: l'elenco degli alimenti, con sinonimi, categoria, stato (crudo/cotto…) e porzioni indicative, è in `scripts/genericFoods.defs.ts` e non contiene valori nutrizionali. Per ogni alimento lo script cerca su USDA (Foundation e SR Legacy), sceglie la voce la cui descrizione corrisponde (es. *"Chicken, broilers or fryers, breast, meat only, raw"*) e ne copia i valori per 100 g, con data di generazione e `fdcId` originale. Se non trova una voce compatibile, l'alimento viene saltato e segnalato (mai inventato).
+I valori del dataset arrivano **solo dall'API USDA**, tramite `scripts/build-generic-foods.ts`: l'elenco degli alimenti, con sinonimi, categoria, stato (crudo/cotto…) e porzioni indicative, è in `scripts/genericFoods.defs.ts` e non contiene valori nutrizionali. Per ogni alimento lo script cerca su USDA (Foundation e SR Legacy), sceglie la voce la cui descrizione corrisponde (es. *"Chicken, broilers or fryers, breast, meat only, raw"*) e ne copia i valori per 100 g, con data di generazione e `fdcId` originale. Se non trova una voce compatibile, l'alimento viene saltato e segnalato (mai inventato). Il riepilogo elenca anche i token delle descrizioni USDA che il traduttore non riconosce.
 
 **Modo semplice, da GitHub** (consigliato):
 1. Assicurati di avere il secret `VITE_USDA_API_KEY` (vedi passo 2 in alto).
