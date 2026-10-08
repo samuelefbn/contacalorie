@@ -161,7 +161,7 @@ for (const [key, base] of Object.entries(BASES)) {
 Object.assign(BASES, {
   pistachio: BASES['nuts|pistachio nuts'], cashew: BASES['nuts|cashew nuts'], macadamia: BASES['nuts|macadamia nuts'],
   tahini: BASES['seeds|sesame butter'], 'tomato|puree': BASES['tomato products|canned|puree'],
-  'tomato|paste': BASES['tomato products|canned|paste'], 'corn flakes': proc('Corn flakes', 'mp', C),
+  'tomato|paste': BASES['tomato products|canned|paste'], 'tomato|canned|paste': BASES['tomato products|canned|paste'], 'corn flakes': proc('Corn flakes', 'mp', C),
   'cereals ready-to-eat|corn flakes': proc('Corn flakes', 'mp', C),
   'onions|spring': BASES['onions|spring or scallions'], cream: animal('Panna', 'f', D),
 } satisfies Record<string, Base>)
@@ -244,6 +244,8 @@ const CONTEXT: Record<string, Record<string, string>> = {
   Oliva: { 'stuffed with pimiento': 'ripiena di peperone' },
   Lievito: { "baker's": 'di birra' },
   "Fiocchi d'avena": { dry: '' },
+  'Galletta di riso': { 'brown rice': 'integrale', unsalted: 'senza sale' },
+  Edamame: { frozen: '', prepared: 'cotto', unprepared: 'crudo' },
 }
 
 /** Informazioni che dipendono dall'alimento (buccia per i vegetali, pelle per gli animali). */
