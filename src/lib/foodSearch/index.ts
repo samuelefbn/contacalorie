@@ -7,6 +7,8 @@ import type { FoodResult } from './types'
 
 export { getProductByBarcode } from './openFoodFacts'
 export { searchGenericDataset, GENERIC_DATASET, normalizeQuery } from './genericSearch'
+export { rankGenericResults, type RankedGeneric } from './genericRanking'
+export { formatFoodLabel, type GenericFoodDisplay } from './display'
 export { SOURCE_LABEL } from './types'
 export type { ExternalSource, FoodKind, FoodResult } from './types'
 

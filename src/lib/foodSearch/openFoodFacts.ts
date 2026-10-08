@@ -63,6 +63,7 @@ export function offProductToResult(p: OffProduct): FoodResult | null {
     brand: pickBrand(p.brands),
     source: 'off',
     kind: 'packaged',
+    isPrimitive: false,
     kcal100: kcal,
     protein100: protein,
     carbs100: carbs,
