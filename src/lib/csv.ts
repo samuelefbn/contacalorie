@@ -17,7 +17,14 @@ export function toCsv(header: string[], rows: CsvCell[][]): string {
 
 export function downloadCsv(filename: string, csv: string) {
   // Il BOM fa riconoscere a Excel la codifica UTF-8 (accenti corretti).
-  const blob = new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' })
+  downloadBlob(filename, new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' }))
+}
+
+export function downloadJson(filename: string, data: unknown) {
+  downloadBlob(filename, new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
+}
+
+function downloadBlob(filename: string, blob: Blob) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

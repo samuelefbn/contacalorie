@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import type { Food, FoodItem } from '../../types'
 import { useUid } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -17,7 +17,10 @@ import {
 } from '../../lib/foodSearch'
 import { isAbortError } from '../../lib/foodSearch/http'
 import { matches, normalize } from '../../lib/text'
-import { foodToItem, itemToFoodInput, saveFood } from '../../services/foods'
+import { cleanBarcode, foodKey, foodLabel } from '../../lib/foodLibrary'
+import { createMyFoodsSearch } from '../../lib/myFoodsSearch'
+import { findSavedFood, foodToItem, recordFoodUse, setFavorite } from '../../services/foods'
+import { queuePendingScan } from '../../services/pendingScans'
 import { Button } from '../../components/ui/Button'
 import { EmptyState, ErrorNotice } from '../../components/ui/Feedback'
 import { BarcodeIcon, SearchIcon, StarIcon } from '../../components/ui/Icons'
@@ -26,9 +29,10 @@ import { BarcodeScanner } from './BarcodeScanner'
 import { FoodRow } from './FoodRow'
 
 interface Props {
-  /** Alimenti personali e usati di recente: cercati per primi, funzionano anche offline. */
-  localItems: FoodItem[]
+  /** I miei alimenti (scansionati, usati, preferiti, ricette): cercati per primi, anche offline. */
   myFoods: Food[]
+  /** Alimenti delle voci di diario recenti (anche quelle registrate prima dei "miei alimenti"). */
+  recentItems: FoodItem[]
   onSelect: (item: FoodItem) => void
   onNotFound: (prefill: { barcode: string | null; name: string }) => void
 }
@@ -40,6 +44,7 @@ type Remote =
   | { status: 'loading'; query: string }
   | { status: 'done'; query: string; outcome: OnlineOutcome }
   | { status: 'barcode'; label: string }
+  | { status: 'offlineScan'; code: string }
   | { status: 'error'; error: unknown; retry: () => void; prefill: Prefill }
 
 const MIN_CHARS = 2
@@ -50,7 +55,7 @@ const DATASET_ENOUGH = 5
 const keyOf = (i: FoodItem) => normalize(`${i.name}|${i.brand ?? ''}`)
 const toItems = (results: FoodResult[]) => results.map(resultToItem)
 
-export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) {
+export function SearchTab({ myFoods, recentItems, onSelect, onNotFound }: Props) {
   const uid = useUid()
   const { notify, reportError } = useToast()
   const [q, setQ] = useState('')
@@ -69,16 +74,19 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
 
   const query = q.trim()
   const active = query.length >= MIN_CHARS
+  const savedIds = new Set(myFoods.map((f) => f.id))
   const savedKeys = new Set(myFoods.map((f) => keyOf(foodToItem(f))))
+  const isSaved = (item: FoodItem) => savedIds.has(foodKey(item)) || savedKeys.has(keyOf(item))
 
-  // (a) I tuoi alimenti e i recenti: i prodotti di Open Food Facts vanno tra i confezionati.
-  const local = active
-    ? Array.from(
-        new Map(localItems.filter((i) => matches(`${i.name} ${i.brand ?? ''}`, query)).map((i) => [keyOf(i), i])).values(),
-      ).slice(0, 8)
+  // (a) I miei alimenti: ricerca sul dispositivo (Fuse.js), ordinati per uso recente e frequente.
+  const searchMine = useMemo(() => createMyFoodsSearch(myFoods), [myFoods])
+  const mineFoods = active ? searchMine(query) : []
+  const mineIds = new Set(mineFoods.map((f) => f.id))
+  // Voci di diario registrate prima dei "miei alimenti" e non ancora salvate.
+  const olderRecents = active
+    ? recentItems.filter((i) => !isSaved(i) && matches(`${i.name} ${i.brand ?? ''}`, query)).slice(0, Math.max(0, 8 - mineFoods.length))
     : []
-  const localGeneric = local.filter((i) => i.source !== 'off')
-  const localPackaged = local.filter((i) => i.source === 'off')
+  const local = [...mineFoods.map(foodToItem), ...olderRecents]
 
   // (b) Dataset generico incluso nell'app: istantaneo, anche offline e con le API giù.
   const dataset = active ? searchGenericDataset(query) : []
@@ -128,38 +136,64 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
     runSearch(q)
   }
 
-  const lookupBarcode = (code: string) => {
+  /** Prodotto già salvato: niente Open Food Facts, la scansione aggiorna solo lastUsedAt e useCount. */
+  const pickSaved = (food: Food) => {
+    setRemote({ status: 'idle' })
+    const item = foodToItem(food)
+    recordFoodUse(uid, item, { origin: 'scan', countUse: true }).done.catch(reportError)
+    onSelect({ ...item, fromScan: true })
+  }
+
+  const lookupBarcode = async (raw: string) => {
     setScanning(false)
-    const mine = myFoods.find((f) => f.barcode === code)
-    if (mine) return onSelect(foodToItem(mine))
+    const code = cleanBarcode(raw) ?? raw.replace(/\D/g, '')
+    const mine = myFoods.find((f) => f.id === code || f.barcode === code)
+    if (mine) return pickSaved(mine)
     const ctrl = startController()
     setRemote({ status: 'barcode', label: `Cerco il codice ${code}…` })
+    // Copia locale/Firestore prima di Open Food Facts (anche se la lista non è ancora caricata).
+    const saved = await findSavedFood(uid, code)
+    if (ctrl.signal.aborted) return
+    if (saved) return pickSaved(saved)
+    if (!navigator.onLine) return setRemote({ status: 'offlineScan', code })
     getProductByBarcode(code, ctrl.signal)
       .then((result) => {
         setRemote({ status: 'idle' })
-        if (result) onSelect(resultToItem(result))
-        else {
+        if (result) {
+          // Ogni prodotto scansionato viene salvato tra i miei alimenti (id = codice a barre).
+          const item = resultToItem(result)
+          const { id, done } = recordFoodUse(uid, item, { origin: 'scan', countUse: true })
+          done.catch(reportError)
+          onSelect({ ...item, foodId: id, fromScan: true })
+        } else {
           notify('Prodotto non trovato su Open Food Facts (o senza valori nutrizionali completi): inseriscilo a mano.')
           onNotFound({ barcode: code, name: '' })
         }
       })
       .catch((error: unknown) => {
         if (isAbortError(error)) return
+        if (!navigator.onLine) return setRemote({ status: 'offlineScan', code })
         setRemote({
           status: 'error',
           error: new Error(
             'Open Food Facts non risponde in questo momento, quindi non posso leggere il codice a barre. ' +
-              'Riprova tra poco oppure inserisci l’alimento a mano.',
+              'Riprova tra poco, salvalo per dopo oppure inserisci l’alimento a mano.',
             { cause: error },
           ),
-          retry: () => lookupBarcode(code),
+          retry: () => void lookupBarcode(code),
           prefill: { barcode: code, name: '' },
         })
       })
   }
 
+  const saveForLater = (code: string) => {
+    queuePendingScan(uid, code).catch(reportError)
+    setRemote({ status: 'idle' })
+    notify(`Codice ${code} salvato: completerò il prodotto appena torni online.`)
+  }
+
   const saveToMine = (item: FoodItem) => {
-    saveFood(uid, itemToFoodInput(item, true)).done.catch(reportError)
+    recordFoodUse(uid, item, { origin: 'search', countUse: false, favorite: true }).done.catch(reportError)
     notify(`${item.name} salvato tra i tuoi alimenti`)
   }
 
@@ -169,19 +203,33 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
   const loading = active && (!current || current.status === 'loading') && remote.status !== 'error'
 
   const localKeys = new Set(local.map(keyOf))
-  const notLocal = (items: FoodItem[]) => items.filter((i) => !localKeys.has(keyOf(i)))
+  const notLocal = (items: FoodItem[]) => items.filter((i) => !localKeys.has(keyOf(i)) && !mineIds.has(foodKey(i)))
   // Generici: dataset + USDA live, tradotti, deduplicati e ordinati (prima gli alimenti semplici).
   const ranked = rankGenericResults(query, mergeGeneric(dataset, outcome?.usda ?? []))
-  const genericItems = [...localGeneric, ...notLocal(toItems(ranked.main))]
+  const genericItems = notLocal(toItems(ranked.main))
   const processedItems = notLocal(toItems(ranked.processed))
-  const packagedItems = [...localPackaged, ...notLocal(toItems(outcome?.packaged ?? []))]
+  const packagedItems = notLocal(toItems(outcome?.packaged ?? []))
 
   const everythingFailed = outcome != null && allSourcesFailed(local.length, dataset.length, outcome)
   const offline = outcome != null && [outcome.usdaError, outcome.packagedError].some((e) => e instanceof OfflineError)
 
   const star = (item: FoodItem) => {
+    const food = item.foodId ? myFoods.find((f) => f.id === item.foodId) : undefined
+    if (food) {
+      return (
+        <button
+          type="button"
+          aria-label={food.favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+          aria-pressed={food.favorite}
+          onClick={() => setFavorite(uid, food.id, !food.favorite).catch(reportError)}
+          className="flex h-9 w-9 items-center justify-center text-amber-500"
+        >
+          <StarIcon filled={food.favorite} className="h-5 w-5" />
+        </button>
+      )
+    }
     if (item.foodId) return null
-    const saved = savedKeys.has(keyOf(item))
+    const saved = isSaved(item)
     return (
       <button
         type="button"
@@ -226,6 +274,28 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
 
       {remote.status === 'barcode' && <LoadingBlock label={remote.label} />}
 
+      {remote.status === 'offlineScan' && (
+        <div className="space-y-2" role="alert">
+          <ErrorNotice
+            error={
+              new Error(
+                `Sei offline e il codice ${remote.code} non è tra i tuoi alimenti: per leggerne i dati serve Open Food Facts. ` +
+                  'Salvalo per dopo: appena torni online completo il prodotto in automatico e ti avviso.',
+              )
+            }
+            title="Codice non disponibile offline"
+          />
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => saveForLater(remote.code)}>
+              Salva per dopo
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => onNotFound({ barcode: remote.code, name: '' })}>
+              Inserisci a mano
+            </Button>
+          </div>
+        </div>
+      )}
+
       {remote.status === 'error' && (
         <div className="space-y-2">
           <ErrorNotice error={remote.error} title="Ricerca non riuscita" />
@@ -233,6 +303,11 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
             <Button size="sm" variant="secondary" onClick={remote.retry}>
               Riprova
             </Button>
+            {remote.prefill.barcode && (
+              <Button size="sm" variant="secondary" onClick={() => saveForLater(remote.prefill.barcode!)}>
+                Salva per dopo
+              </Button>
+            )}
             <Button size="sm" variant="ghost" onClick={() => onNotFound(remote.prefill)}>
               Inserisci a mano
             </Button>
@@ -256,6 +331,24 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
 
       {active && !everythingFailed && remote.status !== 'error' && (
         <>
+          {local.length > 0 && (
+            <section aria-label="I miei alimenti">
+              <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">I miei alimenti</h3>
+              <ul>
+                {local.map((item, i) => (
+                  <FoodRow
+                    key={`${item.foodId ?? keyOf(item)}-${i}`}
+                    item={item}
+                    title={foodLabel(item)}
+                    showBrand={false}
+                    pending={item.foodId ? myFoods.find((f) => f.id === item.foodId)?.pending : false}
+                    onSelect={() => onSelect(item)}
+                    actions={star(item)}
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
           <ResultSection
             title="Alimenti generici"
             items={genericItems}

@@ -10,8 +10,8 @@ interface Props {
   initialName?: string
   barcode?: string | null
   submitLabel: string
-  /** `save` = l'utente vuole salvarlo anche tra i propri alimenti. */
-  onSubmit: (item: FoodItem, grams: number, save: boolean) => void
+  /** `favorite` = l'utente vuole metterlo tra i preferiti (aggiunto al diario viene comunque salvato tra i suoi alimenti). */
+  onSubmit: (item: FoodItem, grams: number, favorite: boolean) => void
 }
 
 type Basis = 'per100' | 'total'
@@ -23,7 +23,7 @@ export function ManualFoodForm({ initialName = '', barcode = null, submitLabel, 
   const [grams, setGrams] = useState('100')
   const [basis, setBasis] = useState<Basis>('per100')
   const [values, setValues] = useState({ kcal: '', protein: '', carbs: '', fat: '' })
-  const [save, setSave] = useState(true)
+  const [favorite, setFavorite] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const set = (k: keyof typeof values) => (e: ChangeEvent<HTMLInputElement>) =>
@@ -61,7 +61,7 @@ export function ManualFoodForm({ initialName = '', barcode = null, submitLabel, 
         foodId: null,
       },
       g,
-      save,
+      favorite,
     )
   }
 
@@ -87,7 +87,7 @@ export function ManualFoodForm({ initialName = '', barcode = null, submitLabel, 
         <NumberField label="Grassi" suffix="g" value={values.fat} onChange={set('fat')} />
       </div>
       {barcode && <p className="text-xs text-slate-500">Codice a barre: {barcode}</p>}
-      <Toggle label="Salva anche tra i miei alimenti" checked={save} onChange={setSave} />
+      <Toggle label="Aggiungi ai preferiti" checked={favorite} onChange={setFavorite} />
       {error && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {error}

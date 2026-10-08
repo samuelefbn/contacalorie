@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "build:foods": "tsx scripts/build-generic-foods.ts"
+    "build:foods": "tsx scripts/build-generic-foods.ts",
+    "test:rules": "npx -y firebase-tools@15.33.0 emulators:exec --only firestore --project demo-contacalorie \"vitest run -c vitest.rules.config.ts\""
   },
   "dependencies": {
     "@zxing/browser": "^0.2.1",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",

@@ -1,19 +1,20 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   getRedirectResult,
   onAuthStateChanged,
   signInWithPopup,
   signInWithRedirect,
-  signOut as fbSignOut,
   type User,
 } from 'firebase/auth'
 import { auth, googleProvider } from '../lib/firebase'
+import { isLeaving, secureSignOut, wipeLocalDataAndReload } from '../services/session'
 
 interface AuthValue {
   user: User | null
   loading: boolean
   error: unknown
   signIn: () => Promise<void>
+  /** Logout sicuro: esce, cancella i dati locali e ricarica (le modifiche in attesa vanno gestite prima). */
   signOut: () => Promise<void>
 }
 
@@ -27,9 +28,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<unknown>(null)
 
+  const lastUid = useRef<string | null>(null)
+
   useEffect(() => {
     getRedirectResult(auth).catch(setError)
     return onAuthStateChanged(auth, (u) => {
+      // Uscita fatta in un'altra scheda (o account cambiato): anche qui si cancellano i dati locali.
+      if (lastUid.current && lastUid.current !== u?.uid && !isLeaving()) {
+        void wipeLocalDataAndReload()
+        return
+      }
+      lastUid.current = u?.uid ?? null
       setUser(u)
       setLoading(false)
     })
@@ -46,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const signOut = useCallback(() => fbSignOut(auth), [])
+  const signOut = useCallback(() => secureSignOut(), [])
 
   const value = useMemo(() => ({ user, loading, error, signIn, signOut }), [user, loading, error, signIn, signOut])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

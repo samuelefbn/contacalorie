@@ -1,5 +1,5 @@
 import type { DocumentSnapshot, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore'
-import type { Entry, Food, Nutrients, Profile, RecipeIngredient, WeightEntry } from '../types'
+import type { Entry, Food, FoodOrigin, FoodSource, FoodType, Nutrients, PendingScan, Profile, RecipeIngredient, WeightEntry } from '../types'
 import { ZERO } from '../lib/nutrition'
 
 type Data = Record<string, unknown>
@@ -31,31 +31,58 @@ export function toEntry(d: QueryDocumentSnapshot): Entry {
     foodId: strOrNull(x.foodId),
     barcode: strOrNull(x.barcode),
     createdAt: toDate(x.createdAt),
+    pending: d.metadata.hasPendingWrites,
   }
 }
 
-export function toFood(d: QueryDocumentSnapshot): Food {
+const FOOD_TYPES: FoodType[] = ['packaged', 'generic', 'custom', 'recipe']
+const FOOD_ORIGINS: FoodOrigin[] = ['scan', 'search', 'manual', 'recipe']
+const FOOD_SOURCES: FoodSource[] = ['off', 'usda', 'manual', 'custom', 'recipe']
+const oneOf = <T extends string>(v: unknown, allowed: T[], fallback: T): T => (allowed.includes(v as T) ? (v as T) : fallback)
+
+export function toFood(d: DocumentSnapshot): Food {
   const x = read(d)
   const ingredients = Array.isArray(x.ingredients) ? (x.ingredients as Data[]) : []
+  const recipe = x.kind === 'recipe'
+  const barcode = strOrNull(x.barcode)
+  // I documenti creati prima di tipo/origine/utilizzi ricevono valori dedotti.
+  const createdAt = toDate(x.createdAt)
   return {
     id: d.id,
     name: String(x.name ?? ''),
     brand: strOrNull(x.brand),
-    barcode: strOrNull(x.barcode),
+    barcode,
     per100: toNutrients(x.per100),
     defaultGrams: numOr(x.defaultGrams, 100),
+    servingGrams: typeof x.servingGrams === 'number' ? x.servingGrams : null,
     favorite: x.favorite === true,
-    kind: x.kind === 'recipe' ? 'recipe' : 'food',
+    kind: recipe ? 'recipe' : 'food',
     ingredients: ingredients.map(
       (i): RecipeIngredient => ({ name: String(i.name ?? ''), grams: numOr(i.grams, 0), per100: toNutrients(i.per100) }),
     ),
+    source: recipe ? 'recipe' : oneOf(x.source, FOOD_SOURCES, 'custom'),
+    type: recipe ? 'recipe' : oneOf(x.type, FOOD_TYPES, barcode ? 'packaged' : 'custom'),
+    origin: recipe ? 'recipe' : oneOf(x.origin, FOOD_ORIGINS, 'manual'),
+    createdAt,
+    lastUsedAt: toDate(x.lastUsedAt) ?? createdAt,
+    useCount: numOr(x.useCount, 0),
+    pending: d.metadata.hasPendingWrites,
+  }
+}
+
+export function toPendingScan(d: QueryDocumentSnapshot): PendingScan {
+  const x = read(d)
+  return {
+    barcode: d.id,
+    status: x.status === 'not_found' ? 'not_found' : 'pending',
     createdAt: toDate(x.createdAt),
+    pending: d.metadata.hasPendingWrites,
   }
 }
 
 export function toWeight(d: QueryDocumentSnapshot): WeightEntry {
   const x = read(d)
-  return { date: d.id, kg: numOr(x.kg, 0) }
+  return { date: d.id, kg: numOr(x.kg, 0), pending: d.metadata.hasPendingWrites }
 }
 
 export const DEFAULT_PROFILE: Profile = {
@@ -71,6 +98,7 @@ export const DEFAULT_PROFILE: Profile = {
   proteinTarget: 120,
   carbsTarget: 230,
   fatTarget: 65,
+  onboarded: false,
 }
 
 export function toProfile(d: DocumentSnapshot): Profile | null {
@@ -90,5 +118,7 @@ export function toProfile(d: DocumentSnapshot): Profile | null {
     proteinTarget: numOr(x.proteinTarget, p.proteinTarget),
     carbsTarget: numOr(x.carbsTarget, p.carbsTarget),
     fatTarget: numOr(x.fatTarget, p.fatTarget),
+    // I profili salvati prima dell'onboarding non hanno il campo: valgono come completati.
+    onboarded: x.onboarded !== false,
   }
 }

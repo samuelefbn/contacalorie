@@ -3,7 +3,7 @@ import type { Entry, MealType } from '../../types'
 import { useUid } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { deleteEntry, entryToItem, restoreEntry, updateEntry } from '../../services/entries'
-import { itemToFoodInput, saveFood } from '../../services/foods'
+import { recordFoodUse } from '../../services/foods'
 import { isValidDateKey } from '../../lib/dates'
 import { Sheet } from '../../components/ui/Sheet'
 import { Button } from '../../components/ui/Button'
@@ -40,7 +40,7 @@ export function EntryEditor({ entry, onClose }: Props) {
   }
 
   const saveAsFood = () => {
-    saveFood(uid, itemToFoodInput({ ...entryToItem(entry), defaultGrams: g ?? entry.grams })).done.catch(reportError)
+    recordFoodUse(uid, { ...entryToItem(entry), defaultGrams: g ?? entry.grams }, { origin: entry.source === 'manual' ? 'manual' : 'search', countUse: false, favorite: true }).done.catch(reportError)
     notify(`${entry.name} salvato tra i tuoi alimenti`)
   }
 

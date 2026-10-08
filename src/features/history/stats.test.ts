@@ -18,6 +18,7 @@ const entry = (date: string, kcal: number): Entry => ({
   foodId: null,
   barcode: null,
   createdAt: null,
+  pending: false,
 })
 
 describe('statistiche storico', () => {

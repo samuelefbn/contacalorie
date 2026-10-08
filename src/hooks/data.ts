@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { limit, orderBy, query, where } from 'firebase/firestore'
 import type { FoodItem } from '../types'
-import { entriesRef, foodsRef, userRef, weightsRef } from '../services/refs'
-import { toEntry, toFood, toProfile, toWeight } from '../services/mappers'
+import { entriesRef, foodsRef, pendingScansRef, userRef, weightsRef } from '../services/refs'
+import { toEntry, toFood, toPendingScan, toProfile, toWeight } from '../services/mappers'
 import { entryToItem } from '../services/entries'
 import { useDocData, useQueryData } from './useFirestore'
 
@@ -75,4 +75,10 @@ export function useRecentFoods(uid: string) {
 export function useWeights(uid: string) {
   const q = useMemo(() => query(weightsRef(uid), orderBy('date')), [uid])
   return useQueryData(q, toWeight)
+}
+
+/** Codici a barre salvati offline in attesa di essere completati. */
+export function usePendingScans(uid: string) {
+  const q = useMemo(() => query(pendingScansRef(uid)), [uid])
+  return useQueryData(q, toPendingScan)
 }

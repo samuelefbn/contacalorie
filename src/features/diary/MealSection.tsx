@@ -3,6 +3,7 @@ import { sumNutrients } from '../../lib/nutrition'
 import { fmtDec, fmtInt } from '../../lib/format'
 import { Card } from '../../components/ui/Card'
 import { PlusIcon } from '../../components/ui/Icons'
+import { PendingMark } from '../../components/ui/PendingMark'
 
 interface Props {
   label: string
@@ -43,7 +44,10 @@ export function MealSection({ label, icon, entries, onAdd, onEdit, onSaveRecipe 
               <li key={e.id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
                 <button type="button" onClick={() => onEdit(e)} className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate">{e.name}</p>
+                    <p className="flex min-w-0 items-center gap-1.5">
+                      <span className="truncate">{e.name}</span>
+                      {e.pending && <PendingMark />}
+                    </p>
                     <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                       {fmtInt(e.grams)} g{e.brand ? ` · ${e.brand}` : ''}
                     </p>

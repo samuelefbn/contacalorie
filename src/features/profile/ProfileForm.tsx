@@ -12,12 +12,14 @@ import { NumberField, Segmented, SelectField, Toggle } from '../../components/ui
 interface Props {
   profile: Profile
   isNew: boolean
+  /** Chiamata dopo il salvataggio (es. fine dell'onboarding). */
+  onSaved?: () => void
   displayName: string | null
 }
 
 const inRange = (n: number, min: number, max: number) => Number.isFinite(n) && n >= min && n <= max
 
-export function ProfileForm({ profile, isNew, displayName }: Props) {
+export function ProfileForm({ profile, isNew, displayName, onSaved }: Props) {
   const uid = useUid()
   const { notify, reportError } = useToast()
   const [sex, setSex] = useState<Sex>(profile.sex)
@@ -66,8 +68,10 @@ export function ProfileForm({ profile, isNew, displayName }: Props) {
       proteinTarget: Math.round(m.protein),
       carbsTarget: Math.round(m.carbs),
       fatTarget: Math.round(m.fat),
+      onboarded: true,
     }).catch(reportError)
     notify('Profilo salvato')
+    onSaved?.()
   }
 
   return (

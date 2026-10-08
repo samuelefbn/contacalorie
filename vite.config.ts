@@ -47,12 +47,12 @@ export default defineConfig({
         navigateFallback: 'index.html',
         runtimeCaching: [
           {
-            // Risposte di Open Food Facts e USDA: utili offline per alimenti già cercati.
+            // Risposte di Open Food Facts e USDA già viste: subito dalla cache (anche offline), aggiornate in
+            // background (stale-while-revalidate). Sono dati pubblici, non dell'utente; la cache si svuota al logout.
             urlPattern: ({ url }) => url.hostname.endsWith('openfoodfacts.org') || url.hostname === 'api.nal.usda.gov',
-            handler: 'NetworkFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'food-data',
-              networkTimeoutSeconds: 8,
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] },
             },

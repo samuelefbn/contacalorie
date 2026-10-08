@@ -5,31 +5,20 @@ import { useInstallPrompt } from '../../hooks/useInstallPrompt'
 import { DEFAULT_PROFILE } from '../../services/mappers'
 import { Card, SectionTitle } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
+import { AccountSection } from '../account/AccountSection'
+import { MyDataSection } from '../account/MyDataSection'
 import { Segmented } from '../../components/ui/Fields'
 import { ExportSection } from './ExportSection'
 import { ProfileForm } from './ProfileForm'
 
 export function ProfilePage({ profile }: { profile: Profile | null }) {
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const { theme, setTheme } = useTheme()
   const install = useInstallPrompt()
 
   return (
     <div className="space-y-4">
-      <Card className="flex items-center gap-3">
-        {user?.photoURL ? (
-          <img src={user.photoURL} alt="" className="h-12 w-12 rounded-full" referrerPolicy="no-referrer" />
-        ) : (
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-xl dark:bg-emerald-900">👤</div>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{user?.displayName ?? 'Utente'}</p>
-          <p className="truncate text-sm text-slate-500 dark:text-slate-400">{user?.email}</p>
-        </div>
-        <Button size="sm" variant="secondary" onClick={() => void signOut()}>
-          Esci
-        </Button>
-      </Card>
+      <AccountSection />
 
       <ProfileForm
         key={profile ? JSON.stringify(profile) : 'new'}
@@ -58,6 +47,8 @@ export function ProfilePage({ profile }: { profile: Profile | null }) {
       </Card>
 
       <ExportSection />
+
+      <MyDataSection />
 
       <p className="pb-4 text-center text-xs text-slate-400">
         Dati nutrizionali da{' '}

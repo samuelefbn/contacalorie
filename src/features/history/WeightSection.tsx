@@ -12,6 +12,7 @@ import { NumberField, TextField } from '../../components/ui/Fields'
 import { EmptyState, ErrorNotice } from '../../components/ui/Feedback'
 import { LoadingBlock } from '../../components/ui/Spinner'
 import { WeightChart } from './WeightChart'
+import { PendingMark } from '../../components/ui/PendingMark'
 
 export function WeightSection({ profile }: { profile: Profile | null }) {
   const uid = useUid()
@@ -70,6 +71,7 @@ export function WeightSection({ profile }: { profile: Profile | null }) {
                 <li key={w.date} className="flex items-center justify-between py-1.5">
                   <span>{formatShortDate(w.date)} {w.date.slice(0, 4)}</span>
                   <span className="flex items-center gap-2">
+                    {w.pending && <PendingMark />}
                     <strong className="tabular-nums">{fmtDec(w.kg)} kg</strong>
                     <button
                       type="button"

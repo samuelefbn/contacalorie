@@ -27,20 +27,22 @@ service cloud.firestore {
       return v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
     }
 
-    // Valori nutrizionali per 100 g (o per voce): non negativi e con limiti ragionevoli.
-    function isNutrients(n) {
+    // Valori per 100 g (alimenti e voci): kcal 0-1000 (il grasso puro ne ha ~900), macro 0-100 g.
+    function isPer100(n) {
       return n is map
         && n.keys().hasAll(['kcal', 'protein', 'carbs', 'fat'])
         && n.keys().hasOnly(['kcal', 'protein', 'carbs', 'fat'])
-        && isNumIn(n.kcal, 0, 100000)
-        && isNumIn(n.protein, 0, 10000)
-        && isNumIn(n.carbs, 0, 10000)
-        && isNumIn(n.fat, 0, 10000);
+        && isNumIn(n.kcal, 0, 1000)
+        && isNumIn(n.protein, 0, 100)
+        && isNumIn(n.carbs, 0, 100)
+        && isNumIn(n.fat, 0, 100);
     }
 
-    // createdAt deve essere l'orario del server alla creazione e non cambiare più.
+    // createdAt è l'orario del server alla creazione e poi non cambia. Una scrittura completa fatta
+    // offline su un documento già esistente (vince l'ultima scrittura) può reimpostarlo all'orario attuale.
     function createdAtOk() {
-      return request.resource.data.createdAt == (resource == null ? request.time : resource.data.createdAt);
+      return request.resource.data.createdAt == request.time
+        || (resource != null && request.resource.data.createdAt == resource.data.createdAt);
     }
 
     // ---------- Profilo: users/{uid} ----------
@@ -48,7 +50,7 @@ service cloud.firestore {
       return d.keys().hasOnly([
           'displayName', 'sex', 'age', 'heightCm', 'weightKg', 'activityLevel', 'goal',
           'kcalTarget', 'kcalManual', 'proteinTarget', 'carbsTarget', 'fatTarget',
-          'createdAt', 'updatedAt'
+          'onboarded', 'createdAt', 'updatedAt'
         ])
         && isOptStr(d.get('displayName', null), 100)
         && d.get('sex', 'male') in ['male', 'female']
@@ -62,6 +64,7 @@ service cloud.firestore {
         && isNumIn(d.get('proteinTarget', 0), 0, 1000)
         && isNumIn(d.get('carbsTarget', 0), 0, 2000)
         && isNumIn(d.get('fatTarget', 0), 0, 1000)
+        && d.get('onboarded', true) is bool
         && d.get('createdAt', request.time) is timestamp
         && d.get('updatedAt', request.time) == request.time;
     }
@@ -81,24 +84,48 @@ service cloud.firestore {
         && isNumIn(d.protein, 0, 10000)
         && isNumIn(d.carbs, 0, 10000)
         && isNumIn(d.fat, 0, 10000)
-        && isNutrients(d.per100)
+        && isPer100(d.per100)
         && d.source in ['off', 'usda', 'manual', 'custom', 'recipe']
         && createdAtOk()
         && d.get('updatedAt', request.time) == request.time;
     }
 
-    // ---------- Alimento personale / ricetta: users/{uid}/foods/{foodId} ----------
-    function isValidFood(d) {
+    // ---------- I miei alimenti / ricette: users/{uid}/foods/{foodId} ----------
+    // L'id è la chiave dell'alimento: per i prodotti scansionati è il codice a barre (niente doppioni).
+    function isValidFood(d, foodId) {
       return d.keys().hasAll(['name', 'per100', 'defaultGrams', 'favorite', 'kind', 'createdAt'])
-        && d.keys().hasOnly(['name', 'brand', 'barcode', 'per100', 'defaultGrams', 'favorite', 'kind', 'ingredients', 'createdAt', 'updatedAt'])
+        && d.keys().hasOnly([
+          'name', 'brand', 'barcode', 'per100', 'defaultGrams', 'servingGrams', 'favorite', 'kind', 'ingredients',
+          'source', 'type', 'origin', 'useCount', 'lastUsedAt', 'createdAt', 'updatedAt'
+        ])
+        && foodId.size() <= 100
         && isStrLen(d.name, 1, 200)
         && isOptStr(d.get('brand', null), 200)
-        && isOptStr(d.get('barcode', null), 50)
-        && isNutrients(d.per100)
+        && (d.get('barcode', null) == null || (d.barcode is string && d.barcode.matches('^[0-9]{6,14}$')))
+        && isPer100(d.per100)
         && isNumIn(d.defaultGrams, 0, 10000)
+        && (d.get('servingGrams', null) == null || isNumIn(d.servingGrams, 0, 5000))
         && d.favorite is bool
         && d.kind in ['food', 'recipe']
         && (d.get('ingredients', []) is list && d.get('ingredients', []).size() <= 60)
+        && d.get('source', 'manual') in ['off', 'usda', 'manual', 'custom', 'recipe']
+        && d.get('type', 'custom') in ['packaged', 'generic', 'custom', 'recipe']
+        && d.get('origin', 'manual') in ['scan', 'search', 'manual', 'recipe']
+        // Un prodotto scansionato è salvato con il suo codice a barre come id.
+        && (d.get('origin', 'manual') != 'scan' || foodId == d.get('barcode', ''))
+        && (d.get('useCount', 0) is int && d.get('useCount', 0) >= 0 && d.get('useCount', 0) <= 1000000)
+        && d.get('lastUsedAt', request.time) is timestamp
+        && createdAtOk()
+        && d.get('updatedAt', request.time) == request.time;
+    }
+
+    // ---------- Codici scansionati offline da completare: users/{uid}/pendingScans/{barcode} ----------
+    function isValidPendingScan(d, code) {
+      return d.keys().hasAll(['barcode', 'status', 'createdAt'])
+        && d.keys().hasOnly(['barcode', 'status', 'createdAt', 'updatedAt'])
+        && code.matches('^[0-9]{6,14}$')
+        && d.barcode == code
+        && d.status in ['pending', 'not_found']
         && createdAtOk()
         && d.get('updatedAt', request.time) == request.time;
     }
@@ -123,7 +150,12 @@ service cloud.firestore {
 
       match /foods/{foodId} {
         allow read, delete: if isOwner(uid);
-        allow create, update: if isOwner(uid) && isValidFood(request.resource.data);
+        allow create, update: if isOwner(uid) && isValidFood(request.resource.data, foodId);
+      }
+
+      match /pendingScans/{code} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidPendingScan(request.resource.data, code);
       }
 
       match /weights/{date} {
