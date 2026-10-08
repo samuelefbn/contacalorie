@@ -45,12 +45,25 @@ service cloud.firestore {
         || (resource != null && request.resource.data.createdAt == resource.data.createdAt);
     }
 
+    // ---------- Tutorial di benvenuto: campo users/{uid}.tutorial ----------
+    // completedAt è l'orario del server quando viene salvato; nelle scritture successive del profilo
+    // (merge) resta il valore già memorizzato, quindi basta che sia un timestamp.
+    function isValidTutorial(t) {
+      return t is map
+        && t.keys().hasAll(['completed', 'version', 'skipped'])
+        && t.keys().hasOnly(['completed', 'completedAt', 'version', 'skipped'])
+        && t.completed is bool
+        && t.skipped is bool
+        && t.version is int && t.version >= 1 && t.version <= 1000
+        && (t.get('completedAt', null) == null || t.completedAt is timestamp);
+    }
+
     // ---------- Profilo: users/{uid} ----------
     function isValidProfile(d) {
       return d.keys().hasOnly([
           'displayName', 'sex', 'age', 'heightCm', 'weightKg', 'activityLevel', 'goal',
           'kcalTarget', 'kcalManual', 'proteinTarget', 'carbsTarget', 'fatTarget',
-          'onboarded', 'createdAt', 'updatedAt'
+          'onboarded', 'tutorial', 'createdAt', 'updatedAt'
         ])
         && isOptStr(d.get('displayName', null), 100)
         && d.get('sex', 'male') in ['male', 'female']
@@ -65,6 +78,7 @@ service cloud.firestore {
         && isNumIn(d.get('carbsTarget', 0), 0, 2000)
         && isNumIn(d.get('fatTarget', 0), 0, 1000)
         && d.get('onboarded', true) is bool
+        && (!('tutorial' in d) || isValidTutorial(d.tutorial))
         && d.get('createdAt', request.time) is timestamp
         && d.get('updatedAt', request.time) == request.time;
     }

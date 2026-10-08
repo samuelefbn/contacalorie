@@ -226,3 +226,44 @@ describe('validazione di diario, peso, profilo e coda dei codici', () => {
     await assertSucceeds(deleteDoc(doc(alice, `users/alice/pendingScans/${BARCODE}`)))
   })
 })
+
+describe('tutorial di benvenuto (users/{uid}.tutorial)', () => {
+  const tutorial = (over: Record<string, unknown> = {}) => ({
+    tutorial: { completed: true, completedAt: serverTimestamp(), version: 1, skipped: false, ...over },
+    updatedAt: serverTimestamp(),
+  })
+
+  beforeEach(async () => {
+    await setDoc(doc(alice, 'users/alice'), profile({ onboarded: true }))
+  })
+
+  it('A salva il proprio stato del tutorial (completato o saltato)', async () => {
+    await assertSucceeds(setDoc(doc(alice, 'users/alice'), tutorial(), { merge: true }))
+    await assertSucceeds(setDoc(doc(alice, 'users/alice'), tutorial({ skipped: true }), { merge: true }))
+    // Il profilo si salva ancora con il tutorial già memorizzato (completedAt ormai nel passato).
+    await assertSucceeds(setDoc(doc(alice, 'users/alice'), { age: 32, updatedAt: serverTimestamp() }, { merge: true }))
+  })
+
+  it('B non può scrivere sul tutorial di A', async () => {
+    await assertFails(setDoc(doc(bob, 'users/alice'), tutorial(), { merge: true }))
+    await assertFails(updateDoc(doc(bob, 'users/alice'), { 'tutorial.completed': false, updatedAt: serverTimestamp() }))
+  })
+
+  it.each([
+    ['completed come testo', { completed: 'sì' }],
+    ['skipped mancante', { skipped: undefined }],
+    ['versione decimale', { version: 1.5 }],
+    ['versione zero', { version: 0 }],
+    ['completedAt come testo', { completedAt: '2026-10-08' }],
+    ['campo non previsto', { extra: true }],
+  ])('rifiuta: %s', async (_label, over) => {
+    const t = tutorial(over)
+    // undefined = campo assente (Firestore non accetta valori undefined).
+    t.tutorial = Object.fromEntries(Object.entries(t.tutorial).filter(([, v]) => v !== undefined)) as typeof t.tutorial
+    await assertFails(setDoc(doc(alice, 'users/alice'), t, { merge: true }))
+  })
+
+  it('rifiuta un tutorial che non è una mappa', async () => {
+    await assertFails(setDoc(doc(alice, 'users/alice'), { tutorial: true, updatedAt: serverTimestamp() }, { merge: true }))
+  })
+})
