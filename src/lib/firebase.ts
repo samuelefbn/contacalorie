@@ -1,5 +1,14 @@
 import { initializeApp } from 'firebase/app'
-import { GoogleAuthProvider, connectAuthEmulator, getAuth, type Auth } from 'firebase/auth'
+import {
+  GoogleAuthProvider,
+  browserLocalPersistence,
+  browserPopupRedirectResolver,
+  browserSessionPersistence,
+  connectAuthEmulator,
+  indexedDBLocalPersistence,
+  initializeAuth,
+  type Auth,
+} from 'firebase/auth'
 import {
   connectFirestoreEmulator,
   initializeFirestore,
@@ -40,7 +49,12 @@ function init() {
   const db = initializeFirestore(app, {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
   })
-  const auth = getAuth(app)
+  // Persistenza dell'accesso: la prima disponibile tra localStorage, IndexedDB e (ultima risorsa)
+  // sessionStorage, così su iOS l'utente resta collegato. Il resolver serve a signInWithPopup.
+  const auth = initializeAuth(app, {
+    persistence: [browserLocalPersistence, indexedDBLocalPersistence, browserSessionPersistence],
+    popupRedirectResolver: browserPopupRedirectResolver,
+  })
   // Solo in sviluppo: `VITE_USE_EMULATORS=true npm run dev` usa gli emulatori locali di Firebase.
   if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true') {
     connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
