@@ -22,7 +22,7 @@ export function pickUsdaFood(def: GenericFoodDef, foods: UsdaFood[]): UsdaFood |
     .filter((f) => f.description && matchesDef(def, f.description))
     .filter((f) => {
       const n = usdaNutrients(f)
-      return n != null && isPlausible({ name: def.name, ...n })
+      return n != null && isPlausible({ name: def.display.baseName, ...n })
     })
     .sort(
       (a, b) =>

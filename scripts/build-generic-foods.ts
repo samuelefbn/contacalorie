@@ -11,6 +11,8 @@ import { dirname, resolve } from 'node:path'
 import { fetchJson } from '../src/lib/foodSearch/http'
 import { USDA_DATA_TYPES, USDA_SEARCH_URL, usdaNutrients, type UsdaFood } from '../src/lib/foodSearch/usdaMap'
 import { roundResult } from '../src/lib/foodSearch/validate'
+import { formatFoodLabel } from '../src/lib/foodSearch/display'
+import { untranslatedReport, usdaToItalian } from '../src/lib/foodSearch/usdaToItalian'
 import type { GenericFood, GenericFoodsDataset } from '../src/lib/foodSearch/genericTypes'
 import { GENERIC_FOOD_DEFS, type GenericFoodDef } from './genericFoods.defs'
 import { pickUsdaFood } from './usdaPicker'
@@ -18,6 +20,8 @@ import { pickUsdaFood } from './usdaPicker'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUTPUT = resolve(root, 'src/data/genericFoods.it.json')
 const CONCURRENCY = 3
+
+const label = (f: GenericFood) => formatFoodLabel(f.cut ? { ...f, cut: f.cut } : f)
 
 function loadDotEnv() {
   const file = resolve(root, '.env')
@@ -42,20 +46,26 @@ async function build(def: GenericFoodDef, apiKey: string): Promise<GenericFood |
     if (!picked) return `nessuna voce USDA compatibile (query "${def.query}", termini ${JSON.stringify(def.match)})`
     const n = roundResult({
       id: '',
-      name: def.name,
+      name: formatFoodLabel(def.display),
       brand: null,
       source: 'usda',
       kind: 'generic',
+      isPrimitive: def.isPrimitive,
       ...usdaNutrients(picked)!,
       servingGrams: null,
       barcode: null,
       imageUrl: null,
     })
+    // Verifica del traduttore sulla descrizione reale (i token non riconosciuti finiscono nel riepilogo).
+    usdaToItalian(picked.description ?? '', picked.foodCategory)
     return {
       id: def.id,
-      name: def.name,
+      category: def.display.category,
+      baseName: def.display.baseName,
+      ...(def.display.cut ? { cut: def.display.cut } : {}),
+      details: def.display.details,
+      isPrimitive: def.isPrimitive,
       synonyms: def.synonyms,
-      category: def.category,
       state: def.state ?? null,
       kcal100: n.kcal100,
       protein100: n.protein100,
@@ -100,8 +110,8 @@ async function main() {
         const r = results[i]
         console.log(
           typeof r === 'string'
-            ? `  ✗ ${GENERIC_FOOD_DEFS[i].name}: ${r}`
-            : `  ✓ ${r.name} → ${r.usdaDescription} [${r.dataType} ${r.fdcId}] ${r.kcal100} kcal`,
+            ? `  ✗ ${formatFoodLabel(GENERIC_FOOD_DEFS[i].display)}: ${r}`
+            : `  ✓ ${label(r)} → ${r.usdaDescription} [${r.dataType} ${r.fdcId}] ${r.kcal100} kcal`,
         )
       }
     }),
@@ -110,7 +120,7 @@ async function main() {
   const foods = results.filter((r): r is GenericFood => typeof r !== 'string')
   const missing = GENERIC_FOOD_DEFS.flatMap((d, i) => {
     const r = results[i]
-    return typeof r === 'string' ? [`${d.name}: ${r}`] : []
+    return typeof r === 'string' ? [`${formatFoodLabel(d.display)}: ${r}`] : []
   })
   if (foods.length === 0) {
     console.error('\nNessun alimento ottenuto da USDA (rete o chiave non valide?): il dataset esistente NON viene modificato.')
@@ -126,12 +136,15 @@ async function main() {
   writeFileSync(OUTPUT, JSON.stringify(dataset, null, 1) + '\n')
   console.log(`\nScritte ${foods.length} voci in src/data/genericFoods.it.json; non trovate: ${missing.length}.`)
   missing.forEach((m) => console.log(`  - ${m}`))
+  const untranslated = untranslatedReport()
+  console.log(`Token USDA non tradotti dal traduttore (da aggiungere ai dizionari): ${untranslated.length}`)
+  untranslated.forEach((u) => console.log(`  - "${u.token}" ×${u.count} (es. ${u.example})`))
 
   // Riepilogo leggibile nella pagina dell'esecuzione su GitHub Actions.
   const summary = process.env.GITHUB_STEP_SUMMARY
   if (summary) {
     const rows = foods.map(
-      (f) => `| ${f.name} | ${f.usdaDescription} | ${f.dataType} | ${f.kcal100} | ${f.protein100} | ${f.carbs100} | ${f.fat100} |`,
+      (f) => `| ${label(f)} | ${f.usdaDescription} | ${f.dataType} | ${f.kcal100} | ${f.protein100} | ${f.carbs100} | ${f.fat100} |`,
     )
     appendFileSync(
       summary,
@@ -143,6 +156,9 @@ async function main() {
         ...rows,
         '',
         missing.length ? `### Non trovate\n\n${missing.map((m) => `- ${m}`).join('\n')}\n` : '',
+        untranslatedReport().length
+          ? `### Token USDA non tradotti\n\n${untranslatedReport().map((u) => `- \`${u.token}\` ×${u.count} (es. ${u.example})`).join('\n')}\n`
+          : '',
       ].join('\n'),
     )
   }
