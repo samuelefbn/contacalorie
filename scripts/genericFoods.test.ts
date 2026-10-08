@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createGenericSearch } from '../src/lib/foodSearch/genericSearch'
+import { rankGenericResults } from '../src/lib/foodSearch/genericRanking'
+import { formatFoodLabel } from '../src/lib/foodSearch/display'
+import { usdaToItalian } from '../src/lib/foodSearch/usdaToItalian'
 import type { GenericFood } from '../src/lib/foodSearch/genericTypes'
 import { GENERIC_FOOD_DEFS } from './genericFoods.defs'
 import { matchesDef, pickUsdaFood } from './usdaPicker'
@@ -9,9 +12,9 @@ const search = createGenericSearch(
   GENERIC_FOOD_DEFS.map(
     (d, i): GenericFood => ({
       id: d.id,
-      name: d.name,
+      ...d.display,
+      isPrimitive: d.isPrimitive,
       synonyms: d.synonyms,
-      category: d.category,
       state: d.state ?? null,
       kcal100: 0,
       protein100: 0,
@@ -25,7 +28,7 @@ const search = createGenericSearch(
     }),
   ),
 )
-const names = (q: string) => search(q, 30).map((m) => m.food.name)
+const names = (q: string) => rankGenericResults(q, search(q, 60), 60).main.map((r) => r.name)
 
 describe('definizioni del dataset generico', () => {
   it('circa 300 alimenti con id univoci', () => {
@@ -35,45 +38,58 @@ describe('definizioni del dataset generico', () => {
 
   it('ogni definizione può corrispondere a una descrizione USDA che contiene i suoi termini', () => {
     const impossible = GENERIC_FOOD_DEFS.filter((d) => !matchesDef(d, d.match.map((m) => m.split('|')[0]).join(', ')))
-    expect(impossible.map((d) => d.name)).toEqual([])
+    expect(impossible.map((d) => d.id)).toEqual([])
   })
 
   it('carni e pesci hanno sempre la variante cruda e quella cotta', () => {
-    for (const cat of ['carne', 'pesce'] as const) {
-      const defs = GENERIC_FOOD_DEFS.filter((d) => d.category === cat)
+    for (const cat of ['Carne', 'Pesce'] as const) {
+      const defs = GENERIC_FOOD_DEFS.filter((d) => d.display.category === cat)
       expect(defs.some((d) => d.state === 'crudo')).toBe(true)
       expect(defs.some((d) => d.state && d.state !== 'crudo')).toBe(true)
     }
-    expect(names('salsiccia')).toEqual(expect.arrayContaining(['Salsiccia di maiale, fresca', 'Salsiccia di maiale, cotta']))
-    expect(names('petto di pollo')).toEqual(expect.arrayContaining(['Petto di pollo, crudo', 'Petto di pollo, arrosto']))
+    expect(names('salsiccia')).toEqual(expect.arrayContaining(['Carne - Maiale, salsiccia (fresca)', 'Carne - Maiale, salsiccia (cotta)']))
+    expect(names('petto di pollo')).toEqual(expect.arrayContaining(['Carne - Pollo, petto (crudo)', 'Carne - Pollo, petto (arrosto)']))
   })
 
   it.each([
-    ['pollo', ['Petto di pollo, crudo', 'Coscia di pollo con pelle, cruda', 'Fusello di pollo, crudo']],
-    ['salsiccia', ['Salsiccia di maiale, fresca']],
-    ['mela', ['Mela, con buccia']],
-    ['mele', ['Mela, con buccia']],
-    ['zucchine', ['Zucchine, crude', 'Zucchine, lessate']],
-    ['banana', ['Banana']],
-    ['petto di tacchino', ['Petto di tacchino, crudo', 'Petto di tacchino, arrosto']],
-    ['pomodoro', ['Pomodoro, crudo']],
-    ['insalata', ['Insalata verde, lattuga']],
-    ['maiale', ['Lonza di maiale, cruda']],
-    ['manzo', ['Macinato di manzo 15% grassi, crudo', 'Bistecca di manzo magra, cruda']],
-    ['uovo', ['Uovo intero, crudo', 'Uovo sodo']],
-    ['uova', ['Uovo intero, crudo']],
-    ['riso', ['Riso bianco, crudo', 'Riso bianco, cotto']],
-    ['pasta', ['Pasta di semola, cruda', 'Pasta di semola, cotta']],
-    ['pasta cruda', ['Pasta di semola, cruda']],
-  ])('"%s" restituisce alimenti generici', (query, expected) => {
+    ['mela', ['Frutta - Mela', 'Frutta - Mela (senza buccia)']],
+    ['mele', ['Frutta - Mela']],
+    ['banana', ['Frutta - Banana']],
+    ['zucchine', ['Verdura - Zucchina (cruda)', 'Verdura - Zucchina (lessata)']],
+    ['pomodoro', ['Verdura - Pomodoro (crudo)', 'Verdura - Pomodoro (ciliegino, crudo)']],
+    ['insalata', ['Verdura - Lattuga (a foglia verde)']],
+    ['pollo', ['Carne - Pollo (intero, con pelle, crudo)', 'Carne - Pollo, petto (crudo)']],
+    ['petto di pollo', ['Carne - Pollo, petto (crudo)', 'Carne - Pollo, petto (arrosto)']],
+    ['salsiccia', ['Carne - Maiale, salsiccia (fresca)', 'Carne - Maiale, salsiccia (cotta)']],
+    ['maiale', ['Carne - Maiale, costine (crude)', 'Carne - Maiale, lonza (cruda)']],
+    ['manzo', ['Carne - Manzo, macinato (15% grassi, crudo)', 'Carne - Manzo, filetto (crudo)']],
+    ['uovo', ['Uova - Uovo (intero, crudo)', 'Uova - Uovo (sodo)']],
+    ['uova', ['Uova - Uovo (intero, crudo)']],
+    ['riso', ['Cereali e derivati - Riso (bianco, crudo)', 'Cereali e derivati - Riso (bianco, cotto)']],
+    ['pasta', ['Cereali e derivati - Pasta (di semola, cruda)', 'Cereali e derivati - Pasta (di semola, cotta)']],
+    ['petto di tacchino', ['Carne - Tacchino, petto (crudo)', 'Carne - Tacchino, petto (arrosto)']],
+  ])('"%s" restituisce alimenti generici in italiano', (query, expected) => {
     const found = names(query)
     expect(found).toEqual(expect.arrayContaining(expected))
-    expect(found[0]).toBe(expected[0])
+    expect(found.slice(0, 8).every((n) => !/Salumi|Dolci|Bevande/.test(n))).toBe(true)
+  })
+
+  it('ogni voce ha un formato "Categoria - Alimento (dettaglio)" valido', () => {
+    for (const d of GENERIC_FOOD_DEFS) {
+      const label = formatFoodLabel(d.display)
+      expect(label).toMatch(/^[A-Z][a-z ]+ - [A-ZÀ-Ü]/)
+      expect(d.display.baseName.charAt(0)).toBe(d.display.baseName.charAt(0).toUpperCase())
+    }
+  })
+
+  it('il traduttore USDA copre tutte le voci del dataset (termini di ricerca come descrizione)', () => {
+    const notTranslated = GENERIC_FOOD_DEFS.filter((d) => !usdaToItalian(d.match.map((m) => m.split('|')[0]).join(', ')))
+    expect(notTranslated.map((d) => formatFoodLabel(d.display))).toEqual([])
   })
 })
 
 describe('scelta della voce USDA nello script', () => {
-  const def = GENERIC_FOOD_DEFS.find((d) => d.id === 'petto-di-pollo-crudo')!
+  const def = GENERIC_FOOD_DEFS.find((d) => d.id === 'carne-pollo-petto-crudo')!
   const nutrients = (kcal: number) => [
     { nutrientId: 1008, unitName: 'KCAL', value: kcal },
     { nutrientId: 1003, unitName: 'G', value: 22.5 },

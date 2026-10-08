@@ -24,6 +24,7 @@ const result = (over: Partial<FoodResult> = {}): FoodResult => ({
   servingGrams: null,
   barcode: null,
   imageUrl: null,
+  isPrimitive: true,
   ...over,
 })
 

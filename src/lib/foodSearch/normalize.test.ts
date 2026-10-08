@@ -52,6 +52,7 @@ describe('Open Food Facts → FoodResult', () => {
       brand: 'Barilla',
       source: 'off',
       kind: 'packaged',
+      isPrimitive: false,
       kcal100: 359,
       protein100: 13,
       carbs100: 70.2,
@@ -106,10 +107,13 @@ describe('USDA → FoodResult', () => {
   it('mappa Energy, Protein, Carbohydrate by difference e Total lipid', () => {
     expect(usdaFoodToResult(apple)).toEqual({
       id: 'usda:171688',
-      name: 'Apples, raw, with skin',
+      name: 'Frutta - Mela (con buccia, cruda)',
       brand: null,
       source: 'usda',
       kind: 'generic',
+      isPrimitive: true,
+      dataType: 'SR Legacy',
+      display: { category: 'Frutta', baseName: 'Mela', details: ['con buccia', 'cruda'] },
       kcal100: 52,
       protein100: 0.3,
       carbs100: 13.8,
@@ -133,7 +137,7 @@ describe('USDA → FoodResult', () => {
         { nutrientId: 1050, unitName: 'G', value: 0 },
       ],
     })
-    expect(r).toMatchObject({ name: 'Chicken, breast, raw', kcal100: 120, protein100: 22.5, carbs100: 0, fat100: 2.6 })
+    expect(r).toMatchObject({ name: 'Carne - Pollo, petto (crudo)', kcal100: 120, protein100: 22.5, carbs100: 0, fat100: 2.6 })
   })
 
   it('ricava le kcal dai kJ e scarta alimenti con nutrienti mancanti', () => {

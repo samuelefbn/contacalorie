@@ -1,4 +1,5 @@
 import type { Portion } from '../../types'
+import type { GenericFoodDisplay } from './display'
 
 /** Fonti esterne di dati nutrizionali. */
 export type ExternalSource = 'off' | 'usda'
@@ -28,6 +29,14 @@ export interface FoodResult {
   imageUrl: string | null
   /** Id FoodData Central, per evitare doppioni tra dataset e USDA live. */
   fdcId?: number
+  /** Dataset USDA di provenienza ("Foundation", "SR Legacy"), usato per scegliere tra doppioni. */
+  dataType?: string
+  /** Nome italiano strutturato (alimenti generici); `name` ne contiene la forma composta. */
+  display?: GenericFoodDisplay
+  /** Alimento semplice, non trasformato (frutta, verdura, carne, pesce, uova, latte, legumi…). */
+  isPrimitive: boolean
+  /** Sinonimi italiani (dataset generico), usati nella ricerca. */
+  synonyms?: string[]
 }
 
 export const SOURCE_LABEL: Record<ExternalSource, string> = {

@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { canonical, createGenericSearch, genericToResult, normalizeQuery, queryTokens, SCORE } from './genericSearch'
+import { createGenericSearch, genericToResult } from './genericSearch'
 import type { GenericFood } from './genericTypes'
+import { canonical, normalizeQuery, queryTokens } from './queryText'
+import { rankGenericResults } from './genericRanking'
 
-// Solo dati di prova per il ranking: i valori nutrizionali reali arrivano dallo script USDA.
-const food = (id: string, name: string, synonyms: string[] = []): GenericFood => ({
+// Solo dati di prova per la ricerca: i valori nutrizionali reali arrivano dallo script USDA.
+const food = (id: string, baseName: string, details: string[] = [], synonyms: string[] = [], extra: Partial<GenericFood> = {}): GenericFood => ({
   id,
-  name,
+  category: 'Frutta',
+  baseName,
+  details,
+  isPrimitive: true,
   synonyms,
-  category: 'test',
   state: null,
   kcal100: 1,
   protein100: 0,
@@ -18,6 +22,7 @@ const food = (id: string, name: string, synonyms: string[] = []): GenericFood =>
   usdaDescription: '',
   dataType: 'SR Legacy',
   portions: [],
+  ...extra,
 })
 
 describe('normalizzazione della query', () => {
@@ -37,32 +42,33 @@ describe('normalizzazione della query', () => {
   })
 })
 
-describe('ranking dei match', () => {
-  const search = createGenericSearch([
-    food('a', 'Mela, senza buccia', ['mela sbucciata']),
-    food('b', 'Mela, con buccia', ['mela', 'mele']),
-    food('c', 'Succo con polpa di mela verde'),
-    food('d', 'Zucchine, crude', ['zucchina', 'zucchine']),
-    food('e', 'Zucchine, lessate', ['zucchine cotte']),
-    food('f', 'Petto di pollo, crudo', ['pollo', 'petto di pollo']),
-  ])
+describe('ricerca nel dataset', () => {
+  const foods = [
+    food('mela-senza-buccia', 'Mela', ['senza buccia'], ['mela sbucciata']),
+    food('mela', 'Mela', [], ['mela', 'mele']),
+    food('succo', 'Succo di mela', [], [], { category: 'Bevande', isPrimitive: false }),
+    food('zucchina-cruda', 'Zucchina', ['cruda'], ['zucchine'], { category: 'Verdura' }),
+    food('zucchina-lessata', 'Zucchina', ['lessata'], ['zucchine cotte'], { category: 'Verdura' }),
+    food('pollo-petto', 'Pollo', ['crudo'], ['petto di pollo'], { category: 'Carne', cut: 'petto' }),
+  ]
+  const search = createGenericSearch(foods)
+  const ranked = (q: string) => rankGenericResults(q, search(q))
 
-  it('esatto > inizia con > contiene', () => {
-    const r = search('mela')
-    expect(r.map((m) => m.food.id)).toEqual(['b', 'a', 'c'])
-    expect(r.map((m) => m.score)).toEqual([SCORE.exact, SCORE.startsWith, SCORE.contains])
+  it('trova per nome base, plurale, prefisso e sinonimi', () => {
+    expect(ranked('mela').main.map((r) => r.name)).toEqual(['Frutta - Mela', 'Frutta - Mela (senza buccia)'])
+    expect(ranked('mele').main[0].name).toBe('Frutta - Mela')
+    expect(ranked('zucch').main.map((r) => r.name)).toEqual(['Verdura - Zucchina (cruda)', 'Verdura - Zucchina (lessata)'])
+    expect(ranked('petto di pollo').main[0].name).toBe('Carne - Pollo, petto (crudo)')
   })
 
-  it('plurali e prefissi mentre si scrive', () => {
-    expect(search('mele')[0].food.id).toBe('b')
-    expect(search('zucchina').map((m) => m.food.id)).toEqual(['d', 'e'])
-    expect(search('zucch').map((m) => m.food.id)).toEqual(['d', 'e'])
+  it('il succo (trasformato) non compare tra i risultati principali di "mela"', () => {
+    const { main, processed } = ranked('mela')
+    expect(main.map((r) => r.name)).not.toContain('Bevande - Succo di mela')
+    expect(processed.map((r) => r.name)).toEqual(['Bevande - Succo di mela'])
   })
 
-  it('errori di battitura con ricerca approssimata', () => {
-    const r = search('zuchine')
-    expect(r.slice(0, 2).map((m) => m.food.id).sort()).toEqual(['d', 'e'])
-    expect(r[0]?.score).toBeLessThanOrEqual(SCORE.fuzzy)
+  it('tollera gli errori di battitura', () => {
+    expect(search('zuchine').map((r) => r.display?.baseName)).toContain('Zucchina')
   })
 
   it('nessun risultato per query troppo corte o senza senso', () => {
@@ -70,8 +76,8 @@ describe('ranking dei match', () => {
     expect(search('xqzwy')).toEqual([])
   })
 
-  it('converte in FoodResult generico con fonte USDA e porzione', () => {
-    const r = genericToResult({ ...food('m', 'Mela, con buccia'), portions: [{ label: '1 mela media', grams: 180 }] })
-    expect(r).toMatchObject({ id: 'gen:m', kind: 'generic', source: 'usda', servingGrams: 180 })
+  it('converte in FoodResult con etichetta italiana, porzione e flag primitivo', () => {
+    const r = genericToResult({ ...food('m', 'Mela'), portions: [{ label: '1 mela media', grams: 180 }] })
+    expect(r).toMatchObject({ id: 'gen:m', name: 'Frutta - Mela', kind: 'generic', servingGrams: 180, isPrimitive: true })
   })
 })

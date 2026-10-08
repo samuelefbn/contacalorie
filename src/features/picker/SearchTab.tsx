@@ -7,6 +7,7 @@ import {
   allSourcesFailed,
   getProductByBarcode,
   mergeGeneric,
+  rankGenericResults,
   OfflineError,
   resultToItem,
   searchGenericDataset,
@@ -169,7 +170,10 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
 
   const localKeys = new Set(local.map(keyOf))
   const notLocal = (items: FoodItem[]) => items.filter((i) => !localKeys.has(keyOf(i)))
-  const genericItems = [...localGeneric, ...notLocal(toItems(mergeGeneric(dataset, outcome?.usda ?? [])))]
+  // Generici: dataset + USDA live, tradotti, deduplicati e ordinati (prima gli alimenti semplici).
+  const ranked = rankGenericResults(query, mergeGeneric(dataset, outcome?.usda ?? []))
+  const genericItems = [...localGeneric, ...notLocal(toItems(ranked.main))]
+  const processedItems = notLocal(toItems(ranked.processed))
   const packagedItems = [...localPackaged, ...notLocal(toItems(outcome?.packaged ?? []))]
 
   const everythingFailed = outcome != null && allSourcesFailed(local.length, dataset.length, outcome)
@@ -265,6 +269,19 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
             }
             empty={outcome && !loading ? 'Nessun alimento generico trovato.' : null}
           />
+          {processedItems.length > 0 && (
+            <details className="group -mt-2">
+              <summary className="cursor-pointer list-none text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                <span className="group-open:hidden">Mostra anche prodotti trasformati ({processedItems.length})</span>
+                <span className="hidden group-open:inline">Nascondi prodotti trasformati</span>
+              </summary>
+              <ul className="mt-1">
+                {processedItems.map((item, i) => (
+                  <FoodRow key={`${keyOf(item)}-${i}`} item={item} onSelect={() => onSelect(item)} actions={star(item)} />
+                ))}
+              </ul>
+            </details>
+          )}
           <ResultSection
             title="Prodotti confezionati"
             items={packagedItems}
@@ -283,7 +300,7 @@ export function SearchTab({ localItems, myFoods, onSelect, onNotFound }: Props) 
             }
             empty={outcome && !loading && !outcome.packagedError ? 'Nessun prodotto confezionato trovato.' : null}
           />
-          {outcome && genericItems.length === 0 && packagedItems.length === 0 && !outcome.packagedError && (
+          {outcome && genericItems.length === 0 && processedItems.length === 0 && packagedItems.length === 0 && !outcome.packagedError && (
             <EmptyState icon="🔍" title={`Nessun risultato per “${query}”`}>
               <button type="button" className="font-medium text-emerald-600" onClick={() => onNotFound({ barcode: null, name: query })}>
                 Inseriscilo a mano

@@ -15,7 +15,8 @@ describe('dataset alimenti generici', () => {
       expect(f.source).toBe('USDA')
       expect(f.fdcId).toBeGreaterThan(0)
       expect(f.usdaDescription).not.toBe('')
-      expect(isPlausible(f), f.name).toBe(true)
+      expect(isPlausible({ ...f, name: f.baseName }), f.baseName).toBe(true)
+      expect(f.details.every((d) => typeof d === 'string')).toBe(true)
       expect(ids.has(f.id), `id duplicato ${f.id}`).toBe(false)
       ids.add(f.id)
     }

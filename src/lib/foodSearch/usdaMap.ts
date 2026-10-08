@@ -1,4 +1,6 @@
 import type { FoodResult } from './types'
+import { formatFoodLabel } from './display'
+import { usdaToItalian } from './usdaToItalian'
 import { isPlausible, roundResult } from './validate'
 
 // Modulo puro (senza import.meta.env): usato sia dall'app sia dallo script che genera il dataset.
@@ -15,6 +17,8 @@ export interface UsdaFood {
   fdcId: number
   description?: string
   dataType?: string
+  /** Categoria USDA, es. "Fruits and Fruit Juices" (usata per categoria e prodotti trasformati). */
+  foodCategory?: string
   foodNutrients?: UsdaNutrient[]
 }
 
@@ -54,13 +58,18 @@ export function usdaNutrients(f: UsdaFood): Pick<FoodResult, 'kcal100' | 'protei
   return { kcal100: kcal, protein100: protein, carbs100: carbs, fat100: fat }
 }
 
+/**
+ * Converte una voce USDA in risultato con nome italiano strutturato. Restituisce null se i
+ * nutrienti sono incompleti o incoerenti, o se la descrizione non è traducibile (mai inglese in UI).
+ */
 export function usdaFoodToResult(f: UsdaFood): FoodResult | null {
   const n = usdaNutrients(f)
   if (!n) return null
-  const description = (f.description ?? '').trim()
+  const t = usdaToItalian(f.description ?? '', f.foodCategory)
+  if (!t) return null
   const result = roundResult({
     id: `usda:${f.fdcId}`,
-    name: (description.charAt(0).toUpperCase() + description.slice(1)).slice(0, 200),
+    name: formatFoodLabel(t.display),
     brand: null,
     source: 'usda',
     kind: 'generic',
@@ -69,6 +78,9 @@ export function usdaFoodToResult(f: UsdaFood): FoodResult | null {
     barcode: null,
     imageUrl: null,
     fdcId: f.fdcId,
+    dataType: f.dataType,
+    display: t.display,
+    isPrimitive: t.isPrimitive,
   })
   return isPlausible(result) ? result : null
 }

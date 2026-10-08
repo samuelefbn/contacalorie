@@ -9,6 +9,7 @@ const results: FoodResult[] = [
     brand: null,
     source: 'off',
     kind: 'packaged',
+    isPrimitive: false,
     kcal100: 64,
     protein100: 3.3,
     carbs100: 4.8,
