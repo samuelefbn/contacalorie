@@ -72,7 +72,7 @@ const BASES: Record<string, Base> = {
   'peas|green': plant('Pisello', 'm', V), 'beans|snap': plant('Fagiolino', 'm', V), 'chard|swiss': plant('Bietola', 'f', V),
   beets: plant('Barbabietola', 'f', V), 'corn|sweet': plant('Mais', 'm', V, { details: ['dolce'] }), olives: plant('Oliva', 'f', V),
   radishes: plant('Ravanello', 'm', V), 'mung beans': plant('Germogli di soia', 'mp', V), parsley: plant('Prezzemolo', 'm', V),
-  basil: plant('Basilico', 'm', V), 'ginger root': plant('Zenzero', 'm', V),
+  basil: plant('Basilico', 'm', V), 'sweet potato leaves': plant('Foglie di patata dolce', 'fp', V), 'ginger root': plant('Zenzero', 'm', V),
   // Legumi
   'beans|cranberry': plant('Fagiolo', 'm', L, { details: ['borlotto'] }), 'beans|white': plant('Fagiolo', 'm', L, { details: ['cannellino'] }),
   'beans|kidney': plant('Fagiolo', 'm', L), 'beans|black': plant('Fagiolo', 'm', L, { details: ['nero'] }),
@@ -82,23 +82,25 @@ const BASES: Record<string, Base> = {
   tempeh: plant('Tempeh', 'm', L), hummus: proc('Hummus', 'm', L),
   // Cereali e derivati
   rice: plant('Riso', 'm', C), pasta: plant('Pasta', 'f', C), 'noodles|egg': plant('Pasta', 'f', C, { details: ["all'uovo"] }),
-  bread: plant('Pane', 'm', C), 'bread|stick': proc('Grissino', 'm', C), crackers: proc('Cracker', 'm', C),
+  bread: plant('Pane', 'm', C), 'bread|stick': proc('Grissino', 'm', C), 'bread|sticks': proc('Grissino', 'm', C), crackers: proc('Cracker', 'm', C),
   'wheat flour': plant('Farina', 'f', C, { details: ['di frumento'] }), semolina: plant('Semola', 'f', C),
   cornmeal: plant('Farina', 'f', C, { details: ['di mais'] }), oats: plant('Avena', 'f', C), barley: plant('Orzo', 'm', C),
   spelt: plant('Farro', 'm', C), quinoa: plant('Quinoa', 'f', C), couscous: plant('Couscous', 'm', C),
   'buckwheat groats': plant('Grano saraceno', 'm', C), millet: plant('Miglio', 'm', C), bulgur: plant('Bulgur', 'm', C),
   amaranth: plant('Amaranto', 'm', C), 'snacks|popcorn': proc('Popcorn', 'm', C), 'snacks|rice cakes': proc('Galletta di riso', 'f', C),
-  'cereals ready-to-eat': proc('Cereali pronti', 'mp', C),
+  'cereals ready-to-eat': proc('Cereali pronti', 'mp', C), 'cereals|quick oats': plant("Fiocchi d'avena", 'mp', C),
   // Carne
   chicken: animal('Pollo', 'm', M), turkey: animal('Tacchino', 'm', M), beef: animal('Manzo', 'm', M), veal: animal('Vitello', 'm', M),
   pork: animal('Maiale', 'm', M), lamb: animal('Agnello', 'm', M), duck: animal('Anatra', 'f', M),
   'game meat|rabbit': animal('Coniglio', 'm', M), 'game meat|horse': animal('Cavallo', 'm', M), 'game meat|boar': animal('Cinghiale', 'm', M),
   'game meat|deer': animal('Cervo', 'm', M),
+  sausage: animal('Salsiccia', 'f', S, { processed: true }),
   'pork sausage': animal('Maiale', 'm', M, { cut: ['salsiccia', 'f'], details: ["all'americana"] }),
   'sausage|italian|pork': animal('Maiale', 'm', M, { cut: ['salsiccia', 'f'] }),
   'sausage|turkey': animal('Tacchino', 'm', M, { cut: ['salsiccia', 'f'] }),
   // Salumi
   ham: animal('Prosciutto cotto', 'm', S, { processed: true }), prosciutto: animal('Prosciutto crudo', 'm', S, { processed: true }),
+  'turkey breast': animal('Fesa di tacchino', 'f', S, { processed: true }),
   'beef|cured|dried': animal('Bresaola', 'f', S, { processed: true }), salami: animal('Salame', 'm', S, { processed: true }),
   mortadella: animal('Mortadella', 'f', S, { processed: true }), bologna: animal('Mortadella', 'f', S, { processed: true }),
   'pork|cured|bacon': animal('Pancetta', 'f', S, { processed: true }), frankfurter: animal('Würstel', 'm', S, { processed: true }),
@@ -126,7 +128,7 @@ const BASES: Record<string, Base> = {
   // Grassi e oli
   'oil|olive': plant("Olio d'oliva", 'm', G), 'oil|sunflower': plant('Olio di girasole', 'm', G), 'oil|corn': plant('Olio di mais', 'm', G),
   'oil|peanut': plant('Olio di arachidi', 'm', G), 'oil|coconut': plant('Olio di cocco', 'm', G), lard: animal('Strutto', 'm', G),
-  margarine: proc('Margarina', 'f', G),
+  margarine: proc('Margarina', 'f', G), 'oil|corn|peanut|and olive': plant('Olio', 'm', G, { details: ['=di mais, arachidi e oliva'] }),
   // Frutta secca e semi
   'nuts|walnuts': plant('Noce', 'f', N), 'nuts|almonds': plant('Mandorla', 'f', N), 'nuts|hazelnuts or filberts': plant('Nocciola', 'f', N),
   peanuts: plant('Arachide', 'f', N), 'peanut butter': proc('Burro di arachidi', 'm', N), 'nuts|pistachio nuts': plant('Pistacchio', 'm', N),
@@ -170,7 +172,7 @@ const VARIETIES: Record<string, string> = {
   'red delicious': 'Red Delicious', honeycrisp: 'Honeycrisp', 'pink lady': 'Pink Lady', braeburn: 'Braeburn',
   medjool: 'Medjool', deglet: 'Deglet', iceberg: 'iceberg', 'cos or romaine': 'romana', butterhead: 'cappuccina',
   'green leaf': 'a foglia verde', 'red leaf': 'a foglia rossa', butternut: 'butternut', basmati: 'basmati',
-  'cherry': 'ciliegino', romaine: 'romana', cremini: 'cremini', portabella: 'portobello', shiitake: 'shiitake',
+  'cherry': 'ciliegino', romaine: 'romana', cremini: 'cremini', muscadine: 'Muscadine', manzanilla: 'Manzanilla', portabella: 'portobello', shiitake: 'shiitake',
 }
 
 /** Tagli e parti. */
@@ -179,11 +181,11 @@ const CUTS: Record<string, [string, Gender]> = {
   liver: ['fegato', 'm'], ground: ['macinato', 'm'], tenderloin: ['filetto', 'm'], loin: ['lonza', 'f'], 'top sirloin': ['controfiletto', 'm'],
   'rib eye': ['costata', 'f'], 'rib eye steak': ['costata', 'f'], 'eye of round': ['girello', 'm'], chuck: ['spalla', 'f'],
   brisket: ['punta di petto', 'f'], spareribs: ['costine', 'fp'], 'variety meats and by-products': ['frattaglie', 'fp'],
-  'top round': ['fesa', 'f'], rib: ['costata', 'f'], back: ['schiena', 'f'], neck: ['collo', 'm'], shoulder: ['spalla', 'f'],
+  'top round': ['fesa', 'f'], round: ['fesa', 'f'], 'chuck for stew': ['spalla', 'f'], rib: ['costata', 'f'], back: ['schiena', 'f'], neck: ['collo', 'm'], shoulder: ['spalla', 'f'],
 }
 
 /** Tagli che specificano quello precedente (es. il filetto è parte della lonza). */
-const CUT_REFINES: Record<string, string> = { tenderloin: 'lonza', 'top sirloin': 'lonza', 'eye of round': 'fesa' }
+const CUT_REFINES: Record<string, string> = { tenderloin: 'lonza', 'top sirloin': 'lonza', 'eye of round': 'fesa', 'top round': 'fesa' }
 
 /** Stati di cottura e conservazione. Gli aggettivi in -o si accordano; "=" indica forma invariabile. */
 const STATES: Record<string, string> = {
@@ -193,7 +195,7 @@ const STATES: Record<string, string> = {
   stewed: '=in umido', simmered: 'lessato', poached: '=in camicia', 'hard-boiled': 'sodo', scrambled: 'strapazzato',
   dried: 'secco', dry: 'secco', dehydrated: 'disidratato', canned: '=in scatola', frozen: 'surgelato', smoked: 'affumicato',
   toasted: 'tostato', 'dry roasted': 'tostato', 'dry-roasted': 'tostato', 'oil roasted': '=tostato in olio', fresh: 'fresco',
-  'drained solids': 'sgocciolato', 'drained solids with bone': 'sgocciolato', 'dried and salted': 'secco',
+  'mature cooked': 'cotto', 'drained solids': 'sgocciolato', 'drained solids with bone': 'sgocciolato', 'dried and salted': 'secco',
 }
 
 /** Colori e qualificatori che si accordano col nome. */
@@ -213,6 +215,8 @@ const ADJECTIVES: Record<string, string> = {
   '70-85%': '=70-85%', '45- 59%': '=45-59%', '45-59%': '=45-59%', firm: 'compatto', 'tomato juice': '=pelato',
   chicken: '=di pollo', turkey: '=di tacchino', pork: '=di maiale', 'beef and pork': '=di manzo e maiale', '90% lean meat / 10% fat': '=10% grassi', '80% lean meat / 20% fat': '=20% grassi',
   '70-85% cacao solids': '=70-85%', '45- 59% cacao solids': '=45-59%', '45-59% cacao solids': '=45-59%', espresso: '=espresso',
+  boneless: 'disossato', 'whole wheat': 'integrale', 'pre-sliced': 'affettato', silken: 'vellutato', 'grass-fed': '=da pascolo', beef: '=di manzo',
+  'pork and beef': '=di maiale e manzo', 'with cheddar cheese': '=al formaggio', sunflower: '=di girasole',
   'red wine': '=di vino', balsamic: 'balsamico', 'table': '', compressed: 'fresco',
 }
 
@@ -237,6 +241,9 @@ const CONTEXT: Record<string, Record<string, string>> = {
   Tonno: { light: '', fresh: 'fresco' },
   Cacao: { unsweetened: 'amaro' },
   Pomodoro: { red: '' },
+  Oliva: { 'stuffed with pimiento': 'ripiena di peperone' },
+  Lievito: { "baker's": 'di birra' },
+  "Fiocchi d'avena": { dry: '' },
 }
 
 /** Informazioni che dipendono dall'alimento (buccia per i vegetali, pelle per gli animali). */
@@ -247,10 +254,11 @@ const INFO: Record<string, (kind?: Kind) => string> = {
   'with peel': () => 'con buccia',
   'without skin': (k) => (k === 'animal' ? 'senza pelle' : 'senza buccia'),
   'without peel': () => 'senza buccia',
+  'cooked without skin': () => 'senza buccia',
+  'cooked in skin': () => 'con buccia',
   'meat only': () => 'solo polpa',
   'meat and skin': () => 'con pelle',
   skinless: () => 'senza pelle',
-  boneless: () => 'disossato',
   'separable lean only': () => 'solo parte magra',
   'with salt': () => 'con sale',
   'with salt added': () => 'con sale',
@@ -273,7 +281,15 @@ const IGNORE = new Set([
   'fresh-refrigerated', 'nfs', 'eye', 'air-popped', 'english', 'tap water', '3.25%', '1%', '2%', '80% fat', 'smooth', 'smooth style', 'saltines',
   'dry or hard', 'chunky', 'chunk style', 'canned or bottled', 'without added ascorbic acid', 'with added ascorbic acid',
   'with added vitamin c', 'frozen concentrate', 'not breaded', 'drained', 'shank and sirloin', 'steak', 'roast', 'for stew', 'chops',
+  'dark meat', 'light meat', 'lip off', 'florida', 'california', 'commercial', 'australian', 'imported', 'new zealand', 'prepackaged',
+  'industrial', 'mid-oleic', 'high oleic', 'composite', 'tub', 'unblanched', 'blanched', 'tahini', 'type of kernels unspecified',
 ])
+
+/** Marchi presenti in alcune descrizioni ("MORI-NU, Tofu, silken"): non sono mostrati. */
+const BRANDS = ['mori-nu', 'chobani', 'lifeway', 'quaker', 'ralston', 'kraft', 'kellogg\'s', 'general mills', 'oscar mayer']
+
+/** "85% lean / 15% fat", "90% lean meat / 10% fat" → "15% grassi". */
+const LEAN_FAT = /^\d+% lean(?: meat)? \/ (\d+)% fat$/
 
 /** Categorie USDA di prodotti trasformati: declassati (o nascosti) se non cercati esplicitamente. */
 const PROCESSED_FOOD_CATEGORIES = new Set([
@@ -303,10 +319,26 @@ const normalizeToken = (t: string) =>
     .replace(/\s+/g, ' ')
     .trim()
 
+/** Toglie il marchio, da solo ("CHOBANI") o in testa al token ("RALSTON Corn Flakes"). */
+const stripBrand = (t: string) => {
+  const brand = BRANDS.find((b) => t === b || t.startsWith(`${b} `))
+  return brand ? t.slice(brand.length).trim() : t
+}
+
 export function tokenize(description: string): string[] {
   // Le virgole dentro le parentesi non separano i token.
   const withoutParens = description.replace(/\([^)]*\)/g, ' ')
-  return withoutParens.split(',').map(normalizeToken).filter(Boolean)
+  return withoutParens.split(',').map(normalizeToken).map(stripBrand).filter(Boolean)
+}
+
+const MAX_BASE_TOKENS = 4
+
+function findBase(tokens: string[]): [Base, string[]] | null {
+  for (let len = Math.min(MAX_BASE_TOKENS, tokens.length); len >= 1; len--) {
+    const candidate = BASES[tokens.slice(0, len).join('|')]
+    if (candidate) return [candidate, tokens.slice(len)]
+  }
+  return null
 }
 
 /** Accorda un aggettivo in -o al genere ("crudo" → "cruda"); "=" iniziale = invariabile. */
@@ -344,8 +376,6 @@ export function resetUntranslated() {
   untranslated.clear()
 }
 
-const MAX_BASE_TOKENS = 4
-
 /**
  * Traduce una descrizione USDA. Restituisce null se un token non è riconosciuto
  * (la voce va scartata) o se l'alimento non va mai mostrato (es. alimenti per l'infanzia).
@@ -354,20 +384,14 @@ export function usdaToItalian(description: string, foodCategory?: string): UsdaT
   const tokens = tokenize(description)
   if (tokens.length === 0) return null
 
-  let base: Base | undefined
-  let rest: string[] = []
-  for (let len = Math.min(MAX_BASE_TOKENS, tokens.length); len >= 1; len--) {
-    const candidate = BASES[tokens.slice(0, len).join('|')]
-    if (candidate) {
-      base = candidate
-      rest = tokens.slice(len)
-      break
-    }
-  }
-  if (!base) {
+  // Se l'alimento non è riconosciuto, si riprova saltando i token senza informazione
+  // ("Oil, industrial, mid-oleic, sunflower" → oil|sunflower).
+  const found = findBase(tokens) ?? findBase(tokens.filter((t) => !IGNORE.has(t)))
+  if (!found) {
     recordUntranslated(tokens[0], description)
     return null
   }
+  const [base, rest] = found
   if (base.discard) return null
 
   let cut = base.cut
@@ -392,6 +416,7 @@ export function usdaToItalian(description: string, foodCategory?: string): UsdaT
     else if (tok in ADJECTIVES) {
       if (ADJECTIVES[tok]) info.push([ADJECTIVES[tok], true])
     } else if (IGNORE.has(tok)) continue
+    else if (LEAN_FAT.test(tok)) info.push([`${tok.match(LEAN_FAT)![1]}% grassi`, false])
     else if (/juice|syrup|sauce|candied|sweetened|jelly|pudding|babyfood/.test(tok)) {
       processed = true
       unknown.push(tok)
@@ -416,7 +441,7 @@ export function usdaToItalian(description: string, foodCategory?: string): UsdaT
   const finalStates = chosen.length > 1 ? chosen.filter((s) => !/^crud[oaie]$/.test(s)) : chosen
 
   const details = [
-    ...(base.details ?? []).map((d) => inflect(d, base!.g)),
+    ...(base.details ?? []).map((d) => inflect(d, base.g)),
     ...varieties,
     ...info.map(([text, agrees]) => (agrees ? inflect(text, g) : text)),
     ...finalStates,
