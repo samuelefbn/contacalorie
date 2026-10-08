@@ -53,6 +53,8 @@ samuelefbn.github.io
 
 (in generale `TUO-USERNAME.github.io`, senza `https://` e senza `/contacalorie`). `localhost` è già presente di default.
 
+Controlla anche che il secret `VITE_FIREBASE_AUTH_DOMAIN` sia **esattamente** `contacalorie-28e2d.firebaseapp.com` (senza `https://` e senza `/` finale): è il dominio che apre la finestra di accesso di Google. Se manca il dominio autorizzato l'accesso fallisce con `auth/unauthorized-domain`; se `authDomain` è sbagliato la finestra di Google mostra un errore o non si apre. Dopo aver corretto un secret, rilancia il deploy (**Actions → Deploy su GitHub Pages → Run workflow**).
+
 ### 5. Pubblica le regole di sicurezza di Firestore
 
 1. Apri il file [`firestore.rules`](firestore.rules) di questo repository e copiane **tutto** il contenuto.
@@ -83,6 +85,19 @@ La API key di Firebase non è un segreto (finisce comunque nel JavaScript pubbli
 Fatto: apri https://samuelefbn.github.io/contacalorie/, accedi con Google e completa il profilo.
 
 ---
+
+## Problemi di accesso
+
+L'accesso usa **solo la finestra (popup) di Google**, aperta direttamente al tocco su "Accedi con Google". L'app non usa più il reindirizzamento (`signInWithRedirect`): è ospitata su GitHub Pages, un dominio diverso da `authDomain` (`contacalorie-28e2d.firebaseapp.com`). Su Safari/iOS e nei browser delle app lo storage è separato per sito, quindi il reindirizzamento perdeva il suo stato ("Unable to process request due to missing initial state…"). L'accesso viene salvato sul dispositivo (localStorage, con IndexedDB e sessionStorage come riserva): non serve rifarlo a ogni apertura.
+
+- **iPhone / iPad**: apri il sito in **Safari** (o Chrome) e tocca "Accedi con Google": si apre una finestra di Google; dopo l'accesso si chiude da sola e torni all'app. Se non si apre nulla, vai in **Impostazioni → Safari** e disattiva **"Blocca finestre a comparsa"** (Block Pop-ups), poi tocca **Riprova**. Con "Blocca cookie" attivo l'accesso può fallire: disattivalo o usa Chrome.
+- **App installata sulla schermata Home**: l'accesso funziona come in Safari. Se fallisce, fai l'accesso una volta in Safari, poi riapri l'app.
+- **Link aperto da WhatsApp, Instagram, Facebook, Messenger, TikTok, LINE, LinkedIn (browser interni)**: Google blocca l'accesso in questi browser ("disallowed_useragent"), quindi l'app mostra **"Per accedere apri questo link in Safari o Chrome"**, disattiva il pulsante e offre **"Copia link"**. In alternativa usa il menu dell'app (⋯ o ↗) e scegli **"Apri nel browser"** / **"Apri in Safari"**.
+- **Popup bloccati (computer o Android)**: compare "La finestra di accesso di Google non si è aperta" con il pulsante **Riprova**. Se si ripete, consenti i popup per `samuelefbn.github.io` dall'icona nella barra degli indirizzi.
+- **Finestra chiusa per errore**: nessun messaggio, basta toccare di nuovo "Accedi con Google".
+- **"auth/unauthorized-domain"**: il dominio GitHub Pages non è tra i domini autorizzati (vedi passo 4).
+
+**Come provarlo su iPhone**: apri https://samuelefbn.github.io/contacalorie/ in Safari, tocca "Accedi con Google", scegli l'account e verifica di arrivare al diario; chiudi Safari, riaprilo e controlla di essere ancora collegato. Poi invia il link a te stesso su WhatsApp, aprilo da lì e controlla che compaia l'avviso con "Copia link" e il pulsante di accesso disattivato. Infine prova da Chrome su iPhone e, se l'hai installata, dall'app sulla schermata Home.
 
 ## Funzionalità
 
