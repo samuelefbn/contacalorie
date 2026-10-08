@@ -11,14 +11,14 @@ import { Segmented } from '../../components/ui/Fields'
 import { ExportSection } from './ExportSection'
 import { ProfileForm } from './ProfileForm'
 
-export function ProfilePage({ profile }: { profile: Profile | null }) {
+export function ProfilePage({ profile, onReplayTutorial }: { profile: Profile | null; onReplayTutorial: () => void }) {
   const { user } = useAuth()
   const { theme, setTheme } = useTheme()
   const install = useInstallPrompt()
 
   return (
     <div className="space-y-4">
-      <AccountSection />
+      <AccountSection onReplayTutorial={onReplayTutorial} />
 
       <ProfileForm
         key={profile ? JSON.stringify(profile) : 'new'}

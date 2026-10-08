@@ -7,6 +7,7 @@ import { ToastProvider, useToast } from './contexts/ToastContext'
 import { SyncProvider } from './contexts/SyncContext'
 import { useProfile } from './hooks/data'
 import { usePendingScanCompletion } from './hooks/usePendingScanCompletion'
+import { useTutorial } from './hooks/useTutorial'
 import { createUserDoc } from './services/profile'
 import { DEFAULT_PROFILE } from './services/mappers'
 import { useHashTab, type Tab } from './hooks/useHashTab'
@@ -21,6 +22,7 @@ import { DiaryPage } from './features/diary/DiaryPage'
 import { FoodsPage } from './features/foods/FoodsPage'
 import { ProfilePage } from './features/profile/ProfilePage'
 import { OnboardingPage } from './features/account/OnboardingPage'
+import { TutorialDialog } from './features/tutorial/TutorialDialog'
 
 // I grafici (recharts) sono pesanti: vengono caricati solo aprendo lo Storico.
 const HistoryPage = lazy(() => import('./features/history/HistoryPage'))
@@ -51,6 +53,8 @@ function AuthenticatedApp() {
     createUserDoc(uid, user?.displayName ?? null).catch(reportError)
   }, [missingOnServer, uid, user, reportError])
   const onboarding = profile ? !profile.onboarded : missingOnServer
+  // Il tutorial parte solo dopo l'onboarding del profilo: le due schermate non si sovrappongono.
+  const tutorial = useTutorial(uid, loading || error !== null || onboarding || !profile)
 
   return (
     <div className="min-h-dvh pb-[calc(5rem+env(safe-area-inset-bottom))]">
@@ -78,11 +82,12 @@ function AuthenticatedApp() {
                 <HistoryPage profile={profile} />
               </Suspense>
             )}
-            {tab === 'profilo' && <ProfilePage profile={profile} />}
+            {tab === 'profilo' && <ProfilePage profile={profile} onReplayTutorial={tutorial.replay} />}
           </>
         )}
       </main>
       {!onboarding && <BottomNav tab={tab} onChange={setTab} />}
+      {tutorial.open && <TutorialDialog key={tutorial.mode} onFinish={tutorial.finish} />}
     </div>
   )
 }

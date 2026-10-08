@@ -12,7 +12,7 @@ const fmtDateTime = (iso: string | undefined) =>
 const modifiche = (n: number) => (n === 1 ? '1 modifica non ancora sincronizzata' : `${n} modifiche non ancora sincronizzate`)
 
 /** Account Google: foto, nome, email, ultimo accesso e logout sicuro per dispositivi condivisi. */
-export function AccountSection() {
+export function AccountSection({ onReplayTutorial }: { onReplayTutorial: () => void }) {
   const { user, signOut } = useAuth()
   const { online, pendingCount } = useSync()
   const { reportError } = useToast()
@@ -61,6 +61,9 @@ export function AccountSection() {
           <p className="text-xs text-slate-500 dark:text-slate-400">Ultimo accesso: {fmtDateTime(user.metadata.lastSignInTime)}</p>
         </div>
       </div>
+      <Button variant="ghost" className="w-full" onClick={onReplayTutorial}>
+        Rivedi il tutorial
+      </Button>
       <Button variant="secondary" className="w-full" onClick={() => void leave()} loading={busy !== null} disabled={busy !== null}>
         {busy ?? 'Esci'}
       </Button>

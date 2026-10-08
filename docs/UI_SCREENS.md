@@ -13,8 +13,11 @@ flowchart TD
     Login -- "accesso riuscito" --> Auth
     Auth -- sì --> Onb{"Onboarding da fare?"}
     Onb -- sì --> OP["OnboardingPage"]
-    OP -- "Crea profilo o Salta" --> Tabs
-    Onb -- no --> Tabs["Schede: barra in basso"]
+    OP -- "Crea profilo o Salta" --> Tut
+    Onb -- no --> Tut{"Tutorial da vedere?"}
+    Tut -- sì --> TD["TutorialDialog"]
+    TD -- "Inizia, Salta o Esc" --> Tabs
+    Tut -- no --> Tabs["Schede: barra in basso"]
     Tabs --> D["Diario #/diario"]
     Tabs --> A["Alimenti #/alimenti"]
     Tabs --> S["Storico #/storico"]
@@ -29,6 +32,7 @@ flowchart TD
     A --> RE2["RecipeEditor"]
     RE2 --> Pick
     P -- "Esci" --> Login
+    P -- "Rivedi il tutorial" --> TD
 ```
 
 ## Elementi comuni
@@ -63,6 +67,12 @@ flowchart TD
 - **Mostra**: benvenuto con il nome e il modulo del profilo (`ProfileForm` con `isNew`).
 - **Dati**: profilo base appena creato (`createUserDoc`).
 - **Azioni**: "Crea profilo" (salva con `onboarded: true`), "Salta per ora" (salva i valori predefiniti con `onboarded: true`).
+
+### Tutorial di benvenuto — `src/features/tutorial/TutorialDialog.tsx`
+- **Quando**: una sola volta, dopo il login e dopo l'onboarding del profilo (vedi `docs/FLOWS.md`, "Tutorial di benvenuto"); a richiesta da Account → "Rivedi il tutorial".
+- **Mostra**: dialogo modale (dal basso su mobile, centrato su schermi larghi) con avanzamento "2 di 7", pallini, illustrazione SVG, titolo, 1–3 frasi e, dove serve, l'icona della scheda della barra in basso ("Lo trovi in Diario"). Contenuti in `src/features/tutorial/steps.ts`: benvenuto e privacy, profilo e obiettivi, diario, ricerca, scanner e alimenti salvati, riepilogo e storico, offline e account.
+- **Azioni**: "Avanti", "Indietro", "Salta tutorial", "Inizia" all'ultimo passo, Esc (= salta). Il focus va sul titolo a ogni passo, resta dentro il dialogo (Tab) e torna dov'era alla chiusura.
+- **Dopo "Salta"**: avviso una sola volta "Puoi rivederlo da Account".
 
 ### Diario — `src/features/diary/DiaryPage.tsx`
 - **Mostra**:
@@ -124,7 +134,7 @@ flowchart TD
 - **Azioni**: registrare (`logWeight`), eliminare (`deleteWeight`).
 
 ### Profilo — `src/features/profile/ProfilePage.tsx`
-- **Account** (`src/features/account/AccountSection.tsx`): foto, nome, email, ultimo accesso, **Esci** (logout sicuro).
+- **Account** (`src/features/account/AccountSection.tsx`): foto, nome, email, ultimo accesso, **Rivedi il tutorial** (riapre il tutorial senza modificare lo stato salvato), **Esci** (logout sicuro).
 - **I tuoi dati / Fabbisogno / Target macro** (`ProfileForm`):
   - sesso, età, altezza, peso, attività, obiettivo;
   - metabolismo basale, fabbisogno totale e consigliato;
