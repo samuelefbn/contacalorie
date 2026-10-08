@@ -2,9 +2,13 @@ import { useState } from 'react'
 import type { Food } from '../../types'
 import { useUid } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
-import { useFoods } from '../../hooks/data'
+import { useFoods, usePendingScans } from '../../hooks/data'
 import { foodToItem, setFavorite } from '../../services/foods'
+import { removePendingScan } from '../../services/pendingScans'
+import { foodLabel } from '../../lib/foodLibrary'
 import { matches } from '../../lib/text'
+import { useOnlineStatus } from '../../hooks/useOnlineStatus'
+import { PendingMark } from '../../components/ui/PendingMark'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { Segmented } from '../../components/ui/Fields'
@@ -22,6 +26,8 @@ export function FoodsPage() {
   const uid = useUid()
   const { reportError } = useToast()
   const foods = useFoods(uid)
+  const pendingScans = usePendingScans(uid)
+  const online = useOnlineStatus()
   const [filter, setFilter] = useState<Filter>('all')
   const [q, setQ] = useState('')
   const [editing, setEditing] = useState<Editing>(null)
@@ -29,7 +35,7 @@ export function FoodsPage() {
   const list = foods.data.filter(
     (f) =>
       (filter === 'all' || (filter === 'favorites' ? f.favorite : f.kind === 'recipe')) &&
-      (!q.trim() || matches(`${f.name} ${f.brand ?? ''}`, q)),
+      (!q.trim() || matches(`${f.name} ${f.brand ?? ''} ${f.barcode ?? ''}`, q)),
   )
 
   return (
@@ -42,6 +48,35 @@ export function FoodsPage() {
           + Ricetta
         </Button>
       </div>
+
+      {pendingScans.data.length > 0 && (
+        <Card className="space-y-2">
+          <h2 className="text-sm font-semibold">Da completare</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Codici scansionati offline: {online ? 'li completo da Open Food Facts…' : 'li completo appena torni online.'}
+          </p>
+          <ul>
+            {pendingScans.data.map((p) => (
+              <li key={p.barcode} className="flex items-center gap-2 border-b border-slate-100 py-2 text-sm last:border-0 dark:border-slate-800">
+                <span className="flex-1 tabular-nums">
+                  {p.barcode}{' '}
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {p.status === 'not_found' ? '· non trovato su Open Food Facts: crealo con “+ Alimento”' : '· in attesa'}
+                  </span>
+                </span>
+                {p.pending && <PendingMark />}
+                <button
+                  type="button"
+                  className="text-xs font-medium text-red-600 dark:text-red-400"
+                  onClick={() => removePendingScan(uid, p.barcode).catch(reportError)}
+                >
+                  Rimuovi
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <Card className="space-y-3">
         <input
@@ -70,7 +105,7 @@ export function FoodsPage() {
         ) : list.length === 0 ? (
           <EmptyState icon="🥗" title={foods.data.length === 0 ? 'Nessun alimento personale' : 'Nessun risultato'}>
             {foods.data.length === 0 &&
-              'Crea alimenti e ricette ricorrenti, o salva con la stella quelli trovati nella ricerca: li riaggiungi al diario con un tap.'}
+              'Qui trovi gli alimenti che scansioni o aggiungi al diario, più quelli e le ricette che crei: li riaggiungi con un tap.'}
           </EmptyState>
         ) : (
           <ul>
@@ -78,6 +113,9 @@ export function FoodsPage() {
               <FoodRow
                 key={f.id}
                 item={foodToItem(f)}
+                title={foodLabel(f)}
+                showBrand={false}
+                pending={f.pending}
                 onSelect={() => setEditing({ kind: f.kind, food: f })}
                 actions={
                   <button

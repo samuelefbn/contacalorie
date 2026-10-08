@@ -175,5 +175,8 @@ export function resultToItem(r: FoodResult): FoodItem {
     foodId: null,
     imageUrl: r.imageUrl,
     portions: r.portions,
+    servingGrams: r.servingGrams,
+    // "gen:carne-pollo" → "gen-carne-pollo": diventa l'id tra i miei alimenti (niente doppioni).
+    key: r.id.toLowerCase().replace(/[^a-z0-9-]+/g, '-').slice(0, 100),
   }
 }

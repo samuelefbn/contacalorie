@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { FoodItem } from '../../types'
 import { useUid } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useFoods, useRecentFoods } from '../../hooks/data'
-import { foodToItem, itemToFoodInput, saveFood, setFavorite } from '../../services/foods'
+import { foodToItem, recordFoodUse, setFavorite } from '../../services/foods'
+import { foodLabel } from '../../lib/foodLibrary'
 import { Segmented } from '../../components/ui/Fields'
 import { EmptyState, ErrorNotice } from '../../components/ui/Feedback'
 import { LoadingBlock } from '../../components/ui/Spinner'
@@ -29,7 +30,6 @@ export function FoodPicker({ onSelect, onDirect, manualSubmitLabel }: FoodPicker
   const [manualPrefill, setManualPrefill] = useState<{ barcode: string | null; name: string }>({ barcode: null, name: '' })
   const foods = useFoods(uid)
   const recents = useRecentFoods(uid)
-  const myItems = useMemo(() => foods.data.map(foodToItem), [foods.data])
 
   const quickAdd = (item: FoodItem) => (
     <button
@@ -63,8 +63,8 @@ export function FoodPicker({ onSelect, onDirect, manualSubmitLabel }: FoodPicker
 
       {tab === 'cerca' && (
         <SearchTab
-          localItems={[...myItems, ...recents.all]}
           myFoods={foods.data}
+          recentItems={recents.all}
           onSelect={onSelect}
           onNotFound={goManual}
         />
@@ -77,7 +77,7 @@ export function FoodPicker({ onSelect, onDirect, manualSubmitLabel }: FoodPicker
           <ErrorNotice error={foods.error} />
         ) : foods.data.length === 0 ? (
           <EmptyState icon="⭐" title="Nessun alimento salvato">
-            Salva gli alimenti che usi spesso (stella nei risultati di ricerca) o crea ricette dalla sezione Alimenti.
+            Gli alimenti che scansioni o aggiungi al diario compaiono qui; puoi anche creare ricette dalla sezione Alimenti.
           </EmptyState>
         ) : (
           <ul>
@@ -87,6 +87,9 @@ export function FoodPicker({ onSelect, onDirect, manualSubmitLabel }: FoodPicker
                 <FoodRow
                   key={f.id}
                   item={item}
+                  title={foodLabel(f)}
+                  showBrand={false}
+                  pending={f.pending}
                   onSelect={() => onSelect(item)}
                   actions={
                     <>
@@ -136,11 +139,12 @@ export function FoodPicker({ onSelect, onDirect, manualSubmitLabel }: FoodPicker
           initialName={manualPrefill.name}
           barcode={manualPrefill.barcode}
           submitLabel={manualSubmitLabel}
-          onSubmit={(item, grams, save) => {
-            if (save) {
-              const { id, done } = saveFood(uid, itemToFoodInput(item, false))
+          onSubmit={(item, grams, favorite) => {
+            if (favorite) {
+              // Tra i preferiti subito; l'aggiunta al diario ne registrerà l'uso.
+              const { id, done } = recordFoodUse(uid, item, { origin: 'manual', countUse: false, favorite: true })
               done.catch(reportError)
-              onDirect({ ...item, foodId: id, source: 'custom' }, grams)
+              onDirect({ ...item, foodId: id }, grams)
             } else {
               onDirect(item, grams)
             }
