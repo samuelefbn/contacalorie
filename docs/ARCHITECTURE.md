@@ -54,7 +54,7 @@ flowchart TB
 
 Regole di dipendenza osservate nel codice:
 
-- `src/lib/**` contiene logica **pura o quasi pura**, testata con Vitest. Fanno eccezione `src/lib/firebase.ts` (inizializza Firebase), `src/lib/csv.ts` (crea il download nel DOM), `src/lib/localData.ts` (`browserDataEnv` legge le API del browser) e `src/lib/inAppBrowser.ts` (`currentInAppBrowser` legge `navigator`). `src/lib/foodSearch/usdaMap.ts` e `usdaToItalian.ts` non usano `import.meta.env`, così li usano sia l'app sia lo script `scripts/build-generic-foods.ts`.
+- `src/lib/**` contiene logica **pura o quasi pura**, testata con Vitest. Fanno eccezione `src/lib/firebase.ts` (inizializza Firebase), `src/lib/csv.ts` (crea il download nel DOM), `src/lib/localData.ts` (`browserDataEnv` legge le API del browser) e `src/lib/inAppBrowser.ts` (`currentInAppBrowser` legge `navigator`). `src/lib/foodSearch/usdaMap.ts` non usa `import.meta.env` e `usdaToItalian.ts` lo legge solo in modo protetto (per il log in sviluppo), così entrambi funzionano anche nello script Node `scripts/build-generic-foods.ts`.
 - `src/services/**` è l'**unico** livello che scrive su Firestore (`setDoc`, `updateDoc`, `deleteDoc`, `writeBatch`) e che chiama `signOut`/`deleteUser`.
 - `src/hooks/**` incapsula i listener `onSnapshot` (`useQueryData`, `useDocData` in `src/hooks/useFirestore.ts`).
 - I componenti in `src/features/**` chiamano i servizi senza attendere la Promise (vedi "Offline").
